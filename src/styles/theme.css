@@ -1,0 +1,11 @@
+/* Tema base do projeto NEXVG Manager */
+:root {
+  font-family: Inter, system-ui, sans-serif;
+  color: #1f2937;
+  background: #f8fafc;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
