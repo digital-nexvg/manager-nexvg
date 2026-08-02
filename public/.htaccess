@@ -1,0 +1,11 @@
+RewriteEngine On
+RewriteBase /
+
+# Serve index.html for SPA routes
+RewriteRule ^index\.html$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.html [L]
+
+# Fallback for direct 404s
+ErrorDocument 404 /404.html
