@@ -5,6 +5,101 @@
   box-sizing: border-box;
 }
 
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.login-card {
+  width: min(420px, 100%);
+  padding: 32px;
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: linear-gradient(180deg, rgba(10, 20, 38, 0.96), rgba(8, 18, 34, 0.92));
+  box-shadow: var(--shadow);
+}
+
+.login-eyebrow {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-size: 0.78rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.login-subtitle {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--text-strong);
+}
+
+.login-field input {
+  width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  border-radius: 12px;
+  background: rgba(2, 6, 23, 0.7);
+  color: var(--text);
+  padding: 12px 14px;
+}
+
+.login-button {
+  margin-top: 8px;
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+  color: white;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.login-secondary-button {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 12px;
+  padding: 12px 16px;
+  background: rgba(2, 6, 23, 0.55);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.login-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.94rem;
+}
+
+.app-header-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.logout-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
+  cursor: pointer;
+  font-weight: 700;
+}
+
 .dashboard-shell,
 .clients-page,
 .payments-page {
