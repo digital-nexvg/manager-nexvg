@@ -5,6 +5,7 @@
   box-sizing: border-box;
 }
 
+
 .login-page {
   min-height: 100vh;
   display: grid;
@@ -84,20 +85,226 @@
   font-size: 0.94rem;
 }
 
-.app-header-actions {
+.dashboard-header__brand {
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
 }
 
-.logout-button {
+.dashboard-header__brand-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+
+.dashboard-header__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.dashboard-header__mobile-menu {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.dashboard-header__text-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+}
+
+.dashboard-header__title {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-strong);
+}
+
+.dashboard-header__menu-button {
+  display: none;
   border: 0;
   border-radius: 999px;
-  padding: 8px 14px;
-  background: rgba(239, 68, 68, 0.16);
-  color: #fecaca;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: rgba(110, 231, 249, 0.16);
+  color: var(--text-strong);
+  font-size: 1.1rem;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.mobile-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0 10px;
+  border-radius: 16px;
+  background: rgba(8, 19, 35, 0.96);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: var(--shadow);
+  transform: translateX(20px);
+  opacity: 0;
+  pointer-events: none;
+  max-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
+  transition: transform 0.24s ease, opacity 0.24s ease, max-height 0.24s ease, padding 0.24s ease;
+}
+
+.mobile-nav.is-open {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+  max-height: 260px;
+  padding: 10px;
+}
+
+.mobile-nav__button {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(8, 19, 35, 0.92);
+  color: var(--text);
+  text-align: left;
   font-weight: 700;
+  cursor: pointer;
+}
+
+.mobile-nav__button.is-active {
+  border-color: rgba(110, 231, 249, 0.35);
+  background: linear-gradient(135deg, rgba(79, 140, 255, 0.22), rgba(124, 58, 237, 0.2));
+  color: var(--text-strong);
+}
+
+.mobile-nav__button--logout {
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(248, 113, 113, 0.22);
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    padding: 14px 12px 16px;
+  }
+
+  .dashboard-header__menu-button,
+  .mobile-nav {
+    display: flex;
+  }
+
+  .dashboard-header__brand-main {
+    align-items: center;
+  }
+
+  .dashboard-header__text-stack {
+    align-items: flex-start;
+  }
+
+  .dashboard-header,
+  .clients-page__hero,
+  .payments-page__hero,
+  .clients-page__form-card,
+  .clients-page__table-card,
+  .payments-page__form-card,
+  .payments-page__list-card {
+    padding: 12px;
+  }
+
+  .dashboard-header__title,
+  .dashboard-header h1,
+  .clients-page h1,
+  .payments-page h1 {
+    font-size: clamp(1.25rem, 3.8vw, 1.6rem);
+    line-height: 1.15;
+  }
+
+  .dashboard-header__subtitle,
+  .clients-page__hero-copy p,
+  .payments-page__hero-copy p,
+  .dashboard-section__title,
+  .clients-page__hero-copy h2,
+  .payments-page__hero-copy h2 {
+    font-size: 0.9rem;
+  }
+
+  .dashboard-header__status,
+  .dashboard-month-nav__toggle,
+  .btn {
+    font-size: 0.82rem;
+    min-height: 32px;
+    padding: 7px 10px;
+  }
+
+  .dashboard-grid {
+    gap: 10px;
+  }
+
+  .dashboard-card {
+    padding: 10px;
+  }
+
+  .dashboard-card h3,
+  .dashboard-card p {
+    font-size: 0.88rem;
+  }
+
+  .clients-page__header,
+  .payments-page__header,
+  .clients-page__actions,
+  .payments-page__form-top,
+  .payments-page__tabs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .clients-page__actions {
+    gap: 8px;
+  }
+
+  .clients-page__hero,
+  .payments-page__hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard-month-nav {
+    gap: 6px;
+  }
+
+  .dashboard-month-nav__top {
+    justify-content: flex-start;
+  }
+
+  .dashboard-month-nav__labels {
+    justify-content: flex-start;
+    gap: 6px;
+  }
+
+  .dashboard-month-nav__label {
+    font-size: 0.7rem;
+  }
+
+  .dashboard-month-nav__toggle {
+    padding: 6px 8px;
+    font-size: 0.74rem;
+  }
+
+  .client-form__grid,
+  .payment-form__grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .dashboard-shell,
@@ -261,6 +468,22 @@
 .dashboard-month-nav__top {
   display: flex;
   justify-content: flex-end;
+}
+
+.dashboard-month-nav__labels {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-month-nav__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
 }
 
 .dashboard-month-nav__toggle {

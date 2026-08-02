@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nexvg Manager</title>
+    <script>
+      const pathSegments = window.location.pathname.split('/').filter(Boolean);
+      const redirectPath = pathSegments.length ? `/?redirect=${encodeURIComponent(window.location.pathname)}` : '/';
+      window.location.replace(redirectPath);
+    </script>
+  </head>
+  <body></body>
+</html>

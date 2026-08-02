@@ -5,6 +5,8 @@ import { ClientesPage } from './pages/ClientesPage';
 import { PagamentosPage } from './pages/PagamentosPage';
 import { LoginPage } from './pages/LoginPage';
 
+type SectionKey = 'dashboard' | 'clientes' | 'financeiro';
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     if (typeof window === 'undefined') {
@@ -18,8 +20,26 @@ function App() {
       return '/login';
     }
 
+    const params = new URLSearchParams(window.location.search);
+    const redirectPath = params.get('redirect');
+
+    if (redirectPath) {
+      const normalizedPath = redirectPath.startsWith('/') ? redirectPath : `/${redirectPath}`;
+      window.history.replaceState({}, '', normalizedPath);
+      return normalizedPath;
+    }
+
     return window.location.pathname === '/' ? '/login' : window.location.pathname;
   });
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    return window.innerWidth < 900;
+  });
+  const [activeSection, setActiveSection] = useState<SectionKey>('dashboard');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -27,7 +47,11 @@ function App() {
     }
 
     const syncRoute = () => {
-      const nextRoute = window.location.pathname === '/' ? '/login' : window.location.pathname;
+      const params = new URLSearchParams(window.location.search);
+      const redirectPath = params.get('redirect');
+      const nextRoute = redirectPath
+        ? (redirectPath.startsWith('/') ? redirectPath : `/${redirectPath}`)
+        : (window.location.pathname === '/' ? '/login' : window.location.pathname);
 
       if (!isAuthenticated && nextRoute !== '/login') {
         window.history.replaceState({}, '', '/login');
@@ -35,13 +59,24 @@ function App() {
         return;
       }
 
+      if (redirectPath && nextRoute !== window.location.pathname) {
+        window.history.replaceState({}, '', nextRoute);
+      }
+
       setRoute(nextRoute);
     };
 
-    window.addEventListener('popstate', syncRoute);
-    syncRoute();
+    const handleResize = () => setIsMobile(window.innerWidth < 900);
 
-    return () => window.removeEventListener('popstate', syncRoute);
+    window.addEventListener('popstate', syncRoute);
+    window.addEventListener('resize', handleResize);
+    syncRoute();
+    handleResize();
+
+    return () => {
+      window.removeEventListener('popstate', syncRoute);
+      window.removeEventListener('resize', handleResize);
+    };
   }, [isAuthenticated]);
 
   useEffect(() => {
@@ -81,20 +116,63 @@ function App() {
     window.location.href = `mailto:contatonexvg@gmail.com?subject=${subject}&body=${body}`;
   };
 
+  const handleSectionChange = (section: SectionKey) => {
+    setActiveSection(section);
+    setIsMenuOpen(false);
+  };
+
   if (!isAuthenticated || route === '/login') {
     return <LoginPage onLogin={handleLogin} onForgotPassword={handleForgotPassword} />;
   }
 
+  const mobileMenu = (
+    <nav className={`mobile-nav ${isMenuOpen ? 'is-open' : ''}`} aria-label="Navegação do painel">
+      <button type="button" className={`mobile-nav__button ${activeSection === 'dashboard' ? 'is-active' : ''}`} onClick={() => handleSectionChange('dashboard')}>
+        Dashboard
+      </button>
+      <button type="button" className={`mobile-nav__button ${activeSection === 'clientes' ? 'is-active' : ''}`} onClick={() => handleSectionChange('clientes')}>
+        Clientes
+      </button>
+      <button type="button" className={`mobile-nav__button ${activeSection === 'financeiro' ? 'is-active' : ''}`} onClick={() => handleSectionChange('financeiro')}>
+        Financeiro
+      </button>
+      <button type="button" className="mobile-nav__button mobile-nav__button--logout" onClick={handleLogout}>
+        Sair
+      </button>
+    </nav>
+  );
+
   return (
     <main className="app-shell">
-      <div className="app-header-actions">
-        <button type="button" className="logout-button" onClick={handleLogout}>
-          Sair
-        </button>
-      </div>
-      <DashboardOverview />
-      <ClientesPage />
-      <PagamentosPage />
+      {isMobile ? (
+        <>
+          {activeSection === 'dashboard' ? (
+            <DashboardOverview
+              onToggleMenu={() => setIsMenuOpen((current) => !current)}
+              isMobile={isMobile}
+              mobileMenu={mobileMenu}
+            />
+          ) : null}
+          {activeSection === 'clientes' ? (
+            <>
+              {mobileMenu}
+              <ClientesPage />
+            </>
+          ) : null}
+          {activeSection === 'financeiro' ? (
+            <>
+              {mobileMenu}
+              <PagamentosPage />
+            </>
+          ) : null}
+        </>
+      ) : (
+        <>
+          <DashboardOverview />
+          <ClientesPage />
+          <PagamentosPage />
+        </>
+      )}
     </main>
   );
 }

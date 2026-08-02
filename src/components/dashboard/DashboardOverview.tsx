@@ -10,11 +10,18 @@ function getMonthTitle(date: Date): string {
   return `Mês ${date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`;
 }
 
-export function DashboardOverview() {
+type DashboardOverviewProps = {
+  onToggleMenu?: () => void;
+  isMobile?: boolean;
+  mobileMenu?: React.ReactNode;
+};
+
+export function DashboardOverview({ onToggleMenu, isMobile = false, mobileMenu }: DashboardOverviewProps) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedMetric, setSelectedMetric] = useState<{ sectionTitle: string; metric: DashboardMetric } | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string>(getMonthTitle(new Date()));
   const [isPreviousMonthsOpen, setIsPreviousMonthsOpen] = useState(false);
+  const [isFutureMonthsOpen, setIsFutureMonthsOpen] = useState(false);
 
   useEffect(() => {
     const refresh = () => setRefreshKey((value) => value + 1);
@@ -32,8 +39,9 @@ export function DashboardOverview() {
     const index = monthSections.findIndex((section) => section.title === currentMonthTitle);
     return index >= 0 ? index : 0;
   }, [currentMonthTitle, monthSections]);
-  const visibleMonthSections = useMemo(() => monthSections.slice(currentMonthIndex), [currentMonthIndex, monthSections]);
+  const visibleMonthSections = useMemo(() => monthSections.slice(currentMonthIndex, currentMonthIndex + 1), [currentMonthIndex, monthSections]);
   const previousMonthSections = useMemo(() => monthSections.slice(0, currentMonthIndex), [currentMonthIndex, monthSections]);
+  const futureMonthSections = useMemo(() => monthSections.slice(currentMonthIndex + 1), [currentMonthIndex, monthSections]);
   const selectedSection = monthSections.find((section) => section.title === selectedMonth) ?? visibleMonthSections[0] ?? monthSections[0] ?? null;
 
   return (
@@ -42,17 +50,34 @@ export function DashboardOverview() {
         title="NEXVG Manager"
         subtitle="Resumo financeiro e operacional em um só lugar."
         logoSrc="/logo.png"
+        onToggleMenu={onToggleMenu}
+        isMobile={isMobile}
+        mobileMenu={mobileMenu}
       />
 
       <div className="dashboard-section">
         <div className="dashboard-month-nav__top">
-          <button
-            type="button"
-            className="btn btn--ghost dashboard-month-nav__toggle"
-            onClick={() => setIsPreviousMonthsOpen((current) => !current)}
-          >
-            Meses anteriores
-          </button>
+          <div className="dashboard-month-nav__labels">
+            <span className="dashboard-month-nav__label">Mês atual</span>
+            {previousMonthSections.length ? (
+              <button
+                type="button"
+                className="btn btn--ghost dashboard-month-nav__toggle"
+                onClick={() => setIsPreviousMonthsOpen((current) => !current)}
+              >
+                Meses anteriores
+              </button>
+            ) : null}
+            {futureMonthSections.length ? (
+              <button
+                type="button"
+                className="btn btn--ghost dashboard-month-nav__toggle"
+                onClick={() => setIsFutureMonthsOpen((current) => !current)}
+              >
+                Meses posteriores
+              </button>
+            ) : null}
+          </div>
         </div>
 
         <div className="dashboard-month-nav">
@@ -88,6 +113,35 @@ export function DashboardOverview() {
                   onClick={() => {
                     setSelectedMonth(section.title);
                     setIsPreviousMonthsOpen(false);
+                  }}
+                >
+                  {section.title.replace('Mês ', '')}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isFutureMonthsOpen ? (
+        <div className="dashboard-month-modal__backdrop" onClick={() => setIsFutureMonthsOpen(false)}>
+          <div className="dashboard-month-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="dashboard-month-modal__header">
+              <h3>Meses posteriores</h3>
+              <button type="button" className="btn btn--ghost" onClick={() => setIsFutureMonthsOpen(false)} aria-label="Fechar meses posteriores">
+                ×
+              </button>
+            </div>
+
+            <div className="dashboard-month-modal__list">
+              {futureMonthSections.map((section) => (
+                <button
+                  key={section.title}
+                  type="button"
+                  className="dashboard-month-modal__item"
+                  onClick={() => {
+                    setSelectedMonth(section.title);
+                    setIsFutureMonthsOpen(false);
                   }}
                 >
                   {section.title.replace('Mês ', '')}
