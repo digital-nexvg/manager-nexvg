@@ -136,8 +136,8 @@ function buildMonthMetrics(payments: Array<Payment & { clientName: string }>, mo
   ];
 }
 
-export function getDashboardSections(): DashboardSection[] {
-  const clients = getClients();
+export async function getDashboardSections(): Promise<DashboardSection[]> {
+  const clients = await getClients();
   const payments = clients.flatMap((client) => client.payments.map((payment) => ({ ...payment, clientName: client.companyName })));
 
   const activeClients = clients.filter((client) => client.status === 'active').length;

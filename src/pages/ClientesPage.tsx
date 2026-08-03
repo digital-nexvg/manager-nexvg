@@ -29,7 +29,10 @@ export function ClientesPage() {
   const [isClientsVisible, setIsClientsVisible] = useState(false);
 
   useEffect(() => {
-    const refreshClients = () => setClients(getClients());
+    const refreshClients = async () => {
+      const nextClients = await getClients();
+      setClients(nextClients);
+    };
 
     refreshClients();
     window.addEventListener('nexvg-storage-update', refreshClients);
@@ -78,7 +81,7 @@ export function ClientesPage() {
     setIsClientsVisible(true);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const existingClient = clients.find((client) => client.id === editingId);
 
     const payload: Client = {
@@ -89,13 +92,13 @@ export function ClientesPage() {
     };
 
     if (editingId) {
-      updateClient(payload);
-      setClients(getClients());
+      await updateClient(payload);
     } else {
-      createClient(payload);
-      setClients(getClients());
+      await createClient(payload);
     }
 
+    const nextClients = await getClients();
+    setClients(nextClients);
     resetForm();
   };
 
@@ -117,21 +120,23 @@ export function ClientesPage() {
     setIsClientsVisible(true);
   };
 
-  const handleDelete = (id: string) => {
-    deleteClient(id);
-    setClients(getClients());
+  const handleDelete = async (id: string) => {
+    await deleteClient(id);
+    const nextClients = await getClients();
+    setClients(nextClients);
 
     if (editingId === id) {
       resetForm();
     }
   };
 
-  const handleSaveJourney = (client: Client) => {
-    updateClient({
+  const handleSaveJourney = async (client: Client) => {
+    await updateClient({
       ...client,
       customStatus: getClientJourneyCompletionStatus(client.journey),
     });
-    setClients(getClients());
+    const nextClients = await getClients();
+    setClients(nextClients);
   };
 
   return (

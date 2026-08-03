@@ -17,22 +17,27 @@ type DashboardOverviewProps = {
 };
 
 export function DashboardOverview({ onToggleMenu, isMobile = false, mobileMenu }: DashboardOverviewProps) {
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshKey] = useState(0);
+  const [sections, setSections] = useState<Awaited<ReturnType<typeof getDashboardSections>>>([]);
   const [selectedMetric, setSelectedMetric] = useState<{ sectionTitle: string; metric: DashboardMetric } | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string>(getMonthTitle(new Date()));
   const [isPreviousMonthsOpen, setIsPreviousMonthsOpen] = useState(false);
   const [isFutureMonthsOpen, setIsFutureMonthsOpen] = useState(false);
 
   useEffect(() => {
-    const refresh = () => setRefreshKey((value) => value + 1);
+    const refresh = async () => {
+      const nextSections = await getDashboardSections();
+      setSections(nextSections);
+    };
+
+    refresh();
     window.addEventListener('nexvg-storage-update', refresh);
 
     return () => {
       window.removeEventListener('nexvg-storage-update', refresh);
     };
-  }, []);
+  }, [refreshKey]);
 
-  const sections = useMemo(() => getDashboardSections(), [refreshKey]);
   const monthSections = useMemo(() => sections.filter((section) => section.title.startsWith('Mês ')), [sections]);
   const currentMonthTitle = useMemo(() => getMonthTitle(new Date()), [refreshKey]);
   const currentMonthIndex = useMemo(() => {

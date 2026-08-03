@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nexvg Manager</title>
     <script>
-      const pathSegments = window.location.pathname.split('/').filter(Boolean);
-      const redirectPath = pathSegments.length ? `/?redirect=${encodeURIComponent(window.location.pathname)}` : '/';
+      const fullPath = window.location.pathname + window.location.search + window.location.hash;
+      const redirectPath = fullPath && fullPath !== '/' ? `/?redirect=${encodeURIComponent(fullPath)}` : '/';
       window.location.replace(redirectPath);
     </script>
   </head>

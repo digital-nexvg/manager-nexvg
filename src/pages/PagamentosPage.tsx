@@ -72,7 +72,10 @@ export function PagamentosPage() {
   const [dueDate, setDueDate] = useState(today);
 
   useEffect(() => {
-    const refreshClients = () => setClients(getClients());
+    const refreshClients = async () => {
+      const nextClients = await getClients();
+      setClients(nextClients);
+    };
 
     refreshClients();
     window.addEventListener('nexvg-storage-update', refreshClients);
@@ -92,7 +95,7 @@ export function PagamentosPage() {
     setPaymentMode('monthly');
   };
 
-  const handleSubmitStructure = () => {
+  const handleSubmitStructure = async () => {
     if (!selectedClientId || !scheduleDates.length) {
       return;
     }
@@ -108,7 +111,7 @@ export function PagamentosPage() {
       paid: false,
     }));
 
-    const nextClients = addPaymentsToClient(selectedClientId, payments);
+    const nextClients = await addPaymentsToClient(selectedClientId, payments);
     setClients(nextClients);
     setStructureValue(0);
     setInstallmentsQuantity(1);
@@ -116,24 +119,24 @@ export function PagamentosPage() {
     setScheduleDates([today]);
   };
 
-  const handleSubmitMonthly = () => {
+  const handleSubmitMonthly = async () => {
     if (!selectedClientId) {
       return;
     }
 
-    const nextClients = addPaymentsToClient(selectedClientId, buildYearlyMonthlySchedule(dueDate, Number(monthlyValue)));
+    const nextClients = await addPaymentsToClient(selectedClientId, buildYearlyMonthlySchedule(dueDate, Number(monthlyValue)));
     setClients(nextClients);
     setMonthlyValue(0);
     setDueDate(today);
   };
 
-  const handleTogglePayment = (clientId: string, paymentId: string, paid: boolean) => {
-    const nextClients = updatePaymentInClient(clientId, paymentId, { paid, status: paid ? 'paid' : 'pending' });
+  const handleTogglePayment = async (clientId: string, paymentId: string, paid: boolean) => {
+    const nextClients = await updatePaymentInClient(clientId, paymentId, { paid, status: paid ? 'paid' : 'pending' });
     setClients(nextClients);
   };
 
-  const handleDeletePayment = (clientId: string, paymentId: string) => {
-    const nextClients = deletePaymentFromClient(clientId, paymentId);
+  const handleDeletePayment = async (clientId: string, paymentId: string) => {
+    const nextClients = await deletePaymentFromClient(clientId, paymentId);
     setClients(nextClients);
   };
 

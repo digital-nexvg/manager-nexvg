@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("admin")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Client {
+  id            String         @id @default(cuid())
+  externalId    String?        @unique
+  companyName   String
+  responsible   String?
+  whatsapp      String?
+  email         String?
+  address       String?
+  observations  String?
+  segment       String?
+  status        String         @default("active")
+  customStatus  String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  payments      Payment[]
+  journeySteps  JourneyStep[]
+  journeyNotes  JourneyNote?
+
+  @@map("clients")
+}
+
+model Payment {
+  id            String    @id @default(cuid())
+  externalId    String?   @unique
+  clientId      String
+  description   String
+  value         Decimal   @db.Decimal(10, 2)
+  dueDate       DateTime?
+  month         String?
+  createdMonth  String?
+  paymentDate   DateTime?
+  paid          Boolean   @default(false)
+  status        String?   @default("pending")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  client        Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model JourneyStep {
+  id            String   @id @default(cuid())
+  externalId    String?  @unique
+  clientId      String
+  stepId        String
+  label         String
+  done          Boolean  @default(false)
+  doneAt        DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("journey_steps")
+}
+
+model JourneyNote {
+  id            String   @id @default(cuid())
+  clientId      String   @unique
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("journey_notes")
+}
