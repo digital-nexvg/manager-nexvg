@@ -10,13 +10,13 @@ function resolveApiBaseUrl() {
   if (/^https?:\/\//i.test(candidate)) {
     try {
       const parsed = new URL(candidate);
-      const pathSegment = parsed.pathname.replace(/^\/+/, '').replace(/\/+$/, '');
+      const pathname = parsed.pathname.replace(/\/+$/, '');
 
-      if (pathSegment && !pathSegment.includes('/') && /[a-z0-9.-]+\.[a-z0-9.-]+/i.test(pathSegment)) {
-        return `${parsed.protocol}//${pathSegment}`;
+      if (pathname && pathname !== '/' && !pathname.startsWith('/api')) {
+        return `${parsed.origin}${pathname}`;
       }
 
-      return `${parsed.origin}${parsed.pathname === '/' ? '' : parsed.pathname}`;
+      return parsed.origin;
     } catch {
       return candidate;
     }
@@ -32,8 +32,9 @@ function resolveApiBaseUrl() {
 const API_BASE_URL = resolveApiBaseUrl();
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  const response = await fetch(new URL(normalizedPath, API_BASE_URL || window.location.origin), {
+  const baseUrl = API_BASE_URL ? `${API_BASE_URL}/` : `${window.location.origin}/`;
+  const normalizedPath = path.startsWith('/') ? path.slice(1) : path;
+  const response = await fetch(new URL(normalizedPath, baseUrl), {
     headers: {
       'Content-Type': 'application/json',
       ...(options.headers || {}),
