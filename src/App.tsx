@@ -156,12 +156,22 @@ function App() {
           {activeSection === 'clientes' ? (
             <>
               {mobileMenu}
+              <div className="mobile-nav__back-wrap">
+                <button type="button" className="btn btn--secondary" onClick={() => handleSectionChange('dashboard')}>
+                  Voltar para o início
+                </button>
+              </div>
               <ClientesPage />
             </>
           ) : null}
           {activeSection === 'financeiro' ? (
             <>
               {mobileMenu}
+              <div className="mobile-nav__back-wrap">
+                <button type="button" className="btn btn--secondary" onClick={() => handleSectionChange('dashboard')}>
+                  Voltar para o início
+                </button>
+              </div>
               <PagamentosPage />
             </>
           ) : null}
