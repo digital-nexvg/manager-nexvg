@@ -1,6 +1,7 @@
 import type { Client, Payment } from '../types';
 import { normalizeClientJourney } from '../utils/clientJourney';
 import { api } from './api';
+import { notifyStorageUpdate } from './storage';
 
 function normalizeClient(client: Partial<Client> & { id?: string }): Client {
   return {
@@ -77,6 +78,7 @@ export async function createClient(client: Client): Promise<Client> {
   };
 
   const created = await api.post<{ id: string }>('/api/clients', payload);
+  notifyStorageUpdate();
   return { ...normalized, id: created?.id ?? normalized.id };
 }
 
@@ -115,11 +117,13 @@ export async function updateClient(client: Client): Promise<Client> {
   };
 
   await api.put(`/api/clients/${normalized.id}`, payload);
+  notifyStorageUpdate();
   return normalized;
 }
 
 export async function deleteClient(id: string): Promise<void> {
   await api.delete(`/api/clients/${id}`);
+  notifyStorageUpdate();
 }
 
 export async function addPaymentToClient(clientId: string, payment: Payment): Promise<Client[]> {

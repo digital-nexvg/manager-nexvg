@@ -36,6 +36,14 @@ export function readStorage<T>(key: string, fallback: T): T {
   }
 }
 
+export function notifyStorageUpdate(): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(new CustomEvent('nexvg-storage-update'));
+}
+
 export function writeStorage<T>(key: string, value: T): void {
   const storage = getStorage();
 
@@ -44,5 +52,5 @@ export function writeStorage<T>(key: string, value: T): void {
   }
 
   storage.setItem(key, JSON.stringify(value));
-  window.dispatchEvent(new CustomEvent('nexvg-storage-update'));
+  notifyStorageUpdate();
 }

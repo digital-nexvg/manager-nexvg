@@ -1,6 +1,7 @@
 function resolveApiBaseUrl() {
   const rawValue = import.meta.env.VITE_API_URL?.trim();
-  const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isLocalhost = ['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(hostname);
 
   if (rawValue) {
     const candidate = rawValue.replace(/\/+$/, '');
