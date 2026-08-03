@@ -28,7 +28,11 @@ function resolveApiBaseUrl() {
     return candidate;
   }
 
-  return isLocalhost ? 'http://localhost:3333' : 'https://nexvg-manager-backend-production.up.railway.app';
+  if (isLocalhost) {
+    return 'http://localhost:3333';
+  }
+
+  return 'https://manager-nexvg.com.br/api';
 }
 
 const API_BASE_URL = resolveApiBaseUrl();
