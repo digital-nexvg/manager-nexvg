@@ -1,32 +1,33 @@
 function resolveApiBaseUrl() {
   const rawValue = import.meta.env.VITE_API_URL?.trim();
+  const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
 
-  if (!rawValue) {
-    return typeof window !== 'undefined' ? window.location.origin : '';
-  }
+  if (rawValue) {
+    const candidate = rawValue.replace(/\/+$/, '');
 
-  const candidate = rawValue.replace(/\/+$/, '');
+    if (/^https?:\/\//i.test(candidate)) {
+      try {
+        const parsed = new URL(candidate);
+        const pathname = parsed.pathname.replace(/\/+$/, '');
 
-  if (/^https?:\/\//i.test(candidate)) {
-    try {
-      const parsed = new URL(candidate);
-      const pathname = parsed.pathname.replace(/\/+$/, '');
+        if (pathname && pathname !== '/' && !pathname.startsWith('/api')) {
+          return `${parsed.origin}${pathname}`;
+        }
 
-      if (pathname && pathname !== '/' && !pathname.startsWith('/api')) {
-        return `${parsed.origin}${pathname}`;
+        return parsed.origin;
+      } catch {
+        return candidate;
       }
-
-      return parsed.origin;
-    } catch {
-      return candidate;
     }
+
+    if (/^[a-z0-9.-]+(\.[a-z0-9.-]+)+(:\d+)?$/i.test(candidate)) {
+      return `https://${candidate}`;
+    }
+
+    return candidate;
   }
 
-  if (/^[a-z0-9.-]+(\.[a-z0-9.-]+)+(:\d+)?$/i.test(candidate)) {
-    return `https://${candidate}`;
-  }
-
-  return candidate;
+  return isLocalhost ? 'http://localhost:3333' : 'https://nexvg-manager-backend-production.up.railway.app';
 }
 
 const API_BASE_URL = resolveApiBaseUrl();

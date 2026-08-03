@@ -1,9 +1,6 @@
 import type { Client, Payment } from '../types';
 import { normalizeClientJourney } from '../utils/clientJourney';
 import { api } from './api';
-import { readStorage, writeStorage } from './storage';
-
-const CLIENTS_STORAGE_KEY = 'nexvg-clients';
 
 function normalizeClient(client: Partial<Client> & { id?: string }): Client {
   return {
@@ -32,36 +29,16 @@ function normalizeClient(client: Partial<Client> & { id?: string }): Client {
   };
 }
 
-function readCachedClients(): Client[] {
-  const cached = readStorage<Client[]>(CLIENTS_STORAGE_KEY, []);
-  return (Array.isArray(cached) ? cached : []).map(normalizeClient);
-}
-
-function writeCachedClients(clients: Client[]): void {
-  writeStorage(CLIENTS_STORAGE_KEY, clients.map(normalizeClient));
-}
-
 export async function getClients(): Promise<Client[]> {
-  try {
-    const clients = await api.get<Client[]>('/api/clients');
-    const normalized = (Array.isArray(clients) ? clients : []).map(normalizeClient);
-    writeCachedClients(normalized);
-    return normalized;
-  } catch {
-    return readCachedClients();
-  }
+  const clients = await api.get<Client[]>('/api/clients');
+  return (Array.isArray(clients) ? clients : []).map(normalizeClient);
 }
 
 export async function saveClients(clients: Client[]): Promise<void> {
   const normalized = clients.map(normalizeClient);
-  writeCachedClients(normalized);
 
   for (const client of normalized) {
-    try {
-      await api.put(`/api/clients/${client.id}`, client);
-    } catch {
-      // fallback local-only persistence
-    }
+    await api.put(`/api/clients/${client.id}`, client);
   }
 }
 
@@ -99,17 +76,8 @@ export async function createClient(client: Client): Promise<Client> {
     },
   };
 
-  try {
-    const created = await api.post<{ id: string }>('/api/clients', payload);
-    const nextClient = { ...normalized, id: created?.id ?? normalized.id };
-    const nextClients = [...readCachedClients(), nextClient];
-    writeCachedClients(nextClients);
-    return nextClient;
-  } catch {
-    const nextClients = [...readCachedClients(), normalized];
-    writeCachedClients(nextClients);
-    return normalized;
-  }
+  const created = await api.post<{ id: string }>('/api/clients', payload);
+  return { ...normalized, id: created?.id ?? normalized.id };
 }
 
 export async function updateClient(client: Client): Promise<Client> {
@@ -146,26 +114,12 @@ export async function updateClient(client: Client): Promise<Client> {
     },
   };
 
-  try {
-    await api.put(`/api/clients/${normalized.id}`, payload);
-  } catch {
-    // fallback local-only persistence
-  }
-
-  const nextClients = readCachedClients().map((current) => (current.id === normalized.id ? normalized : current));
-  writeCachedClients(nextClients);
+  await api.put(`/api/clients/${normalized.id}`, payload);
   return normalized;
 }
 
 export async function deleteClient(id: string): Promise<void> {
-  try {
-    await api.delete(`/api/clients/${id}`);
-  } catch {
-    // fallback local-only persistence
-  }
-
-  const nextClients = readCachedClients().filter((client) => client.id !== id);
-  writeCachedClients(nextClients);
+  await api.delete(`/api/clients/${id}`);
 }
 
 export async function addPaymentToClient(clientId: string, payment: Payment): Promise<Client[]> {
