@@ -103,7 +103,8 @@ export function ClientesPage() {
       resetForm();
     } catch (error) {
       console.error('Erro ao salvar cliente:', error);
-      alert('Não foi possível salvar o cliente. Verifique os dados e tente novamente.');
+      const message = error instanceof Error ? error.message : 'Não foi possível salvar o cliente.';
+      alert(`Não foi possível salvar o cliente. ${message}`);
     }
   };
 
