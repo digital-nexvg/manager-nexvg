@@ -22,12 +22,76 @@ export async function saveClients(clients: Client[]): Promise<void> {
 }
 
 export async function createClient(client: Client): Promise<Client> {
-  await api.post('/api/clients', client);
-  return client;
+  const payload = {
+    companyName: client.companyName,
+    responsible: client.responsible,
+    whatsapp: client.whatsapp ?? '',
+    email: client.email ?? '',
+    address: client.address ?? '',
+    observations: client.observations ?? '',
+    segment: client.segment ?? '',
+    status: client.status,
+    customStatus: client.customStatus ?? '',
+    payments: (client.payments ?? []).map((payment) => ({
+      id: payment.id,
+      description: payment.description,
+      value: payment.value,
+      dueDate: payment.dueDate,
+      paymentDate: payment.paymentDate ?? '',
+      month: payment.month ?? '',
+      createdMonth: payment.createdMonth ?? '',
+      paid: payment.paid,
+      status: payment.status ?? (payment.paid ? 'paid' : 'pending'),
+    })),
+    journey: {
+      notes: client.journey?.notes ?? '',
+      steps: (client.journey?.steps ?? []).map((step) => ({
+        id: step.id,
+        label: step.label,
+        done: step.done,
+        doneAt: step.doneAt ?? '',
+      })),
+    },
+  };
+
+  const created = await api.post<{ id: string }>('/api/clients', payload);
+  return { ...client, id: created.id };
 }
 
 export async function updateClient(client: Client): Promise<Client> {
-  await api.put(`/api/clients/${client.id}`, client);
+  const payload = {
+    companyName: client.companyName,
+    responsible: client.responsible,
+    whatsapp: client.whatsapp ?? '',
+    email: client.email ?? '',
+    address: client.address ?? '',
+    observations: client.observations ?? '',
+    segment: client.segment ?? '',
+    status: client.status,
+    customStatus: client.customStatus ?? '',
+    payments: (client.payments ?? []).map((payment) => ({
+      id: payment.id,
+      description: payment.description,
+      value: payment.value,
+      dueDate: payment.dueDate,
+      paymentDate: payment.paymentDate ?? '',
+      month: payment.month ?? '',
+      createdMonth: payment.createdMonth ?? '',
+      paid: payment.paid,
+      status: payment.status ?? (payment.paid ? 'paid' : 'pending'),
+    })),
+    journey: {
+      notes: client.journey?.notes ?? '',
+      steps: (client.journey?.steps ?? []).map((step) => ({
+        id: step.id,
+        label: step.label,
+        done: step.done,
+        doneAt: step.doneAt ?? '',
+      })),
+    },
+  };
+
+  await api.put(`/api/clients/${client.id}`, payload);
   return client;
 }
 

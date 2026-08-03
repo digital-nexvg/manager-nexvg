@@ -91,15 +91,20 @@ export function ClientesPage() {
       journey: existingClient?.journey,
     };
 
-    if (editingId) {
-      await updateClient(payload);
-    } else {
-      await createClient(payload);
-    }
+    try {
+      if (editingId) {
+        await updateClient(payload);
+      } else {
+        await createClient(payload);
+      }
 
-    const nextClients = await getClients();
-    setClients(nextClients);
-    resetForm();
+      const nextClients = await getClients();
+      setClients(nextClients);
+      resetForm();
+    } catch (error) {
+      console.error('Erro ao salvar cliente:', error);
+      alert('Não foi possível salvar o cliente. Verifique os dados e tente novamente.');
+    }
   };
 
   const handleEdit = (client: Client) => {
