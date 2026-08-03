@@ -1,7 +1,18 @@
 import type { Client, Payment } from '../types';
 import { normalizeClientJourney } from '../utils/clientJourney';
 import { api } from './api';
-import { notifyStorageUpdate } from './storage';
+import { notifyStorageUpdate, readStorage, writeStorage } from './storage';
+
+const CLIENTS_STORAGE_KEY = 'nexvg-clients';
+
+function readStoredClients(): Client[] {
+  const storedClients = readStorage<Client[]>(CLIENTS_STORAGE_KEY, []);
+  return Array.isArray(storedClients) ? storedClients.map(normalizeClient) : [];
+}
+
+function persistClients(clients: Client[]): void {
+  writeStorage(CLIENTS_STORAGE_KEY, clients.map(normalizeClient));
+}
 
 function normalizeClient(client: Partial<Client> & { id?: string }): Client {
   return {
@@ -31,8 +42,15 @@ function normalizeClient(client: Partial<Client> & { id?: string }): Client {
 }
 
 export async function getClients(): Promise<Client[]> {
-  const clients = await api.get<Client[]>('/api/clients');
-  return (Array.isArray(clients) ? clients : []).map(normalizeClient);
+  try {
+    const clients = await api.get<Client[]>('/api/clients');
+    const normalized = (Array.isArray(clients) ? clients : []).map(normalizeClient);
+    persistClients(normalized);
+    return normalized;
+  } catch (error) {
+    console.warn('Falling back to stored client data:', error);
+    return readStoredClients();
+  }
 }
 
 export async function saveClients(clients: Client[]): Promise<void> {
@@ -78,8 +96,11 @@ export async function createClient(client: Client): Promise<Client> {
   };
 
   const created = await api.post<{ id: string }>('/api/clients', payload);
+  const nextClient = { ...normalized, id: created?.id ?? normalized.id };
+  const nextClients = [...readStoredClients(), nextClient];
+  persistClients(nextClients);
   notifyStorageUpdate();
-  return { ...normalized, id: created?.id ?? normalized.id };
+  return nextClient;
 }
 
 export async function updateClient(client: Client): Promise<Client> {
@@ -117,12 +138,16 @@ export async function updateClient(client: Client): Promise<Client> {
   };
 
   await api.put(`/api/clients/${normalized.id}`, payload);
+  const nextClients = readStoredClients().map((client) => (client.id === normalized.id ? normalized : client));
+  persistClients(nextClients);
   notifyStorageUpdate();
   return normalized;
 }
 
 export async function deleteClient(id: string): Promise<void> {
   await api.delete(`/api/clients/${id}`);
+  const nextClients = readStoredClients().filter((client) => client.id !== id);
+  persistClients(nextClients);
   notifyStorageUpdate();
 }
 

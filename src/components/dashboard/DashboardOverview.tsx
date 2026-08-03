@@ -26,8 +26,21 @@ export function DashboardOverview({ onToggleMenu, isMobile = false, mobileMenu }
 
   useEffect(() => {
     const refresh = async () => {
-      const nextSections = await getDashboardSections();
-      setSections(nextSections);
+      try {
+        const nextSections = await getDashboardSections();
+        setSections(nextSections);
+      } catch (error) {
+        console.warn('Falha ao carregar o dashboard:', error);
+        setSections([
+          {
+            title: 'Resumo geral',
+            metrics: [
+              { title: 'Clientes Ativos', value: 0, subtitle: 'Sem dados disponíveis', tone: 'neutral', icon: '✓' },
+              { title: 'Clientes Inativos', value: 0, subtitle: 'Sem dados disponíveis', tone: 'neutral', icon: '•' },
+            ],
+          },
+        ]);
+      }
     };
 
     refresh();
