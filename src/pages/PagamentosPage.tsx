@@ -23,6 +23,12 @@ function getCurrentMonthKey(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
+function getMonthKeyFromDateValue(dateValue: string): string {
+  const parsedDate = new Date(`${dateValue}T00:00:00`);
+
+  return `${parsedDate.getFullYear()}-${String(parsedDate.getMonth() + 1).padStart(2, '0')}`;
+}
+
 function parseMoneyInput(value: string): number {
   const normalizedValue = value.replace(/\s/g, '').replace(',', '.');
   const parsedValue = Number(normalizedValue);
@@ -121,13 +127,15 @@ export function PagamentosPage() {
       return;
     }
 
+    const contractMonth = getMonthKeyFromDateValue(startDate);
+
     const payments: Payment[] = scheduleDates.map((date, index) => ({
       id: generateId(),
       description: `Cobrança da estrutura ${index + 1}`,
       value: Number(structureValue),
       dueDate: date,
       month: date.slice(0, 7),
-      createdMonth: getCurrentMonthKey(),
+      createdMonth: contractMonth,
       paymentDate: '',
       paid: false,
     }));

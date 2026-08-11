@@ -1254,6 +1254,21 @@
   gap: 14px;
 }
 
+@media (max-width: 768px) {
+  .structure-payment-form__grid,
+  .monthly-payment-form__grid {
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+    overflow-x: auto;
+    grid-auto-flow: column;
+    padding-bottom: 4px;
+  }
+
+  .structure-payment-form__grid > label,
+  .monthly-payment-form__grid > label {
+    min-width: 150px;
+  }
+}
+
 .structure-payment-form__summary {
   display: flex;
   align-items: center;
