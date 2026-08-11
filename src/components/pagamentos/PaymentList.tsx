@@ -5,7 +5,7 @@ import { formatDate } from '../../utils/formatters';
 type PaymentListProps = {
   client: Client;
   onAddPayment: (clientId: string) => void;
-  onTogglePayment: (clientId: string, paymentId: string, paid: boolean) => void;
+  onTogglePayment: (clientId: string, paymentId: string, paid: boolean, paymentDate?: string) => void;
   onDeletePayment: (clientId: string, paymentId: string) => void;
 };
 
@@ -27,6 +27,8 @@ function getStatus(payment: Payment) {
 
 export function PaymentList({ client, onTogglePayment, onDeletePayment }: PaymentListProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [paymentToConfirm, setPaymentToConfirm] = useState<Payment | null>(null);
+  const [paymentDate, setPaymentDate] = useState(() => new Date().toISOString().slice(0, 10));
   const pendingPayments = client.payments.filter((payment) => !payment.paid);
   const pendingValue = pendingPayments.reduce((sum, payment) => sum + payment.value, 0);
   const nextDuePayment = pendingPayments
@@ -80,7 +82,15 @@ export function PaymentList({ client, onTogglePayment, onDeletePayment }: Paymen
                         <input
                           type="checkbox"
                           checked={payment.paid}
-                          onChange={(event) => onTogglePayment(client.id, payment.id, event.target.checked)}
+                          onChange={(event) => {
+                            if (event.target.checked) {
+                              setPaymentToConfirm(payment);
+                              setPaymentDate(payment.paymentDate || new Date().toISOString().slice(0, 10));
+                              return;
+                            }
+
+                            onTogglePayment(client.id, payment.id, false);
+                          }}
                         />
                         <span>{payment.paid ? 'Pago' : 'Em aberto'}</span>
                       </label>
@@ -104,6 +114,38 @@ export function PaymentList({ client, onTogglePayment, onDeletePayment }: Paymen
           )}
         </div>
       )}
+
+      {paymentToConfirm ? (
+        <div className="confirmation-modal" role="dialog" aria-modal="true">
+          <div className="confirmation-modal__card">
+            <h3>Confirmar pagamento</h3>
+            <p>
+              Informe a data em que o pagamento foi realmente recebido para calcular o mês correto do valor recebido.
+            </p>
+
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 8, textAlign: 'left' }}>
+              <span>Data do pagamento</span>
+              <input type="date" value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} />
+            </label>
+
+            <div className="confirmation-modal__actions">
+              <button type="button" className="btn btn--secondary" onClick={() => setPaymentToConfirm(null)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => {
+                  onTogglePayment(client.id, paymentToConfirm.id, true, paymentDate);
+                  setPaymentToConfirm(null);
+                }}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

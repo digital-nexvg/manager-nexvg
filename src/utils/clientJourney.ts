@@ -8,6 +8,9 @@ export const CLIENT_JOURNEY_STEPS_TEMPLATE: Array<Pick<ClientJourneyStep, 'id' |
   { id: 'google-account', label: 'Acessar/criar Ct Google' },
   { id: 'create-project-base', label: 'Criar base projeto' },
   { id: 'finish-site', label: 'Finalizar site' },
+  { id: 'create-github-repository', label: 'Criar repositorio GitHub' },
+  { id: 'run-server-cloudflare', label: 'Rodar servidor no Cloudflare' },
+  { id: 'publish-site', label: 'Publicar site' },
   { id: 'payment-finished', label: 'Pagamento concluido' },
   { id: 'buy-domain', label: 'Comprar dominio' },
   { id: 'create-corporate-email', label: 'Criar email corporativo' },
@@ -24,18 +27,31 @@ export function createDefaultClientJourneySteps(): ClientJourneyStep[] {
 
 export function normalizeClientJourney(journey?: ClientJourney): ClientJourney {
   const currentSteps = Array.isArray(journey?.steps) ? journey.steps : [];
+  const templateById = new Map(CLIENT_JOURNEY_STEPS_TEMPLATE.map((step) => [step.id, step]));
+  const seenIds = new Set<string>();
 
-  return {
-    notes: journey?.notes ?? '',
-    steps: CLIENT_JOURNEY_STEPS_TEMPLATE.map((templateStep) => {
-      const currentStep = currentSteps.find((step) => step.id === templateStep.id);
+  const normalizedCurrent = currentSteps
+    .filter((step) => templateById.has(step.id) && !seenIds.has(step.id))
+    .map((step) => {
+      seenIds.add(step.id);
+      const templateStep = templateById.get(step.id)!;
 
       return {
         ...templateStep,
-        done: Boolean(currentStep?.done),
-        doneAt: currentStep?.doneAt,
+        done: Boolean(step.done),
+        doneAt: step.doneAt,
       };
-    }),
+    });
+
+  const missingTemplateSteps = CLIENT_JOURNEY_STEPS_TEMPLATE.filter((step) => !seenIds.has(step.id)).map((step) => ({
+    ...step,
+    done: false,
+    doneAt: undefined,
+  }));
+
+  return {
+    notes: journey?.notes ?? '',
+    steps: [...normalizedCurrent, ...missingTemplateSteps],
   };
 }
 
@@ -68,3 +84,4 @@ export function getClientJourneyCompletionStatus(journey?: ClientJourney): strin
 
   return hasPendingSteps ? 'Novo Cliente' : 'Cliente Ativo';
 }
+

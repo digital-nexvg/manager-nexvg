@@ -29,10 +29,14 @@ function resolveApiBaseUrl() {
   }
 
   if (isLocalhost) {
-    return 'http://localhost:3333';
+    return 'http://localhost:3334';
   }
 
-  return 'https://manager-nexvg.com.br/api';
+  if (typeof window !== 'undefined' && window.location.origin) {
+    return window.location.origin;
+  }
+
+  return 'https://manager.nexvg.com.br';
 }
 
 const API_BASE_URL = resolveApiBaseUrl();

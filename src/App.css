@@ -662,6 +662,7 @@
 .dashboard-card__subtitle {
   color: var(--text-muted);
   font-size: 0.88rem;
+  white-space: pre-line;
 }
 
 .clients-page__actions,
@@ -857,6 +858,17 @@
   -webkit-appearance: none;
 }
 
+.payment-form input[type='date'],
+.payment-form input[type='month'],
+.payment-form select,
+.monthly-payment-form input[type='date'],
+.monthly-payment-form select,
+.structure-payment-form input[type='date'],
+.structure-payment-form select {
+  appearance: auto;
+  -webkit-appearance: auto;
+}
+
 .client-form input::placeholder,
 .client-form textarea::placeholder,
 .payment-form input::placeholder,
@@ -874,6 +886,29 @@
   border-color: rgba(79, 140, 255, 0.52);
   transform: translateY(-1px);
   box-shadow: 0 10px 22px rgba(2, 6, 23, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.payment-form input[type='date']:hover,
+.payment-form input[type='month']:hover,
+.payment-form select:hover,
+.monthly-payment-form input[type='date']:hover,
+.monthly-payment-form select:hover,
+.structure-payment-form input[type='date']:hover,
+.structure-payment-form select:hover {
+  transform: none;
+}
+
+.payment-list .btn:hover,
+.payment-list input:hover,
+.payment-list select:hover {
+  transform: none;
+}
+
+.payments-page .btn,
+.payment-form .btn,
+.monthly-payment-form .btn,
+.structure-payment-form .btn {
+  touch-action: manipulation;
 }
 
 .client-form input:focus,
@@ -1035,6 +1070,19 @@
   color: #d7ebff;
 }
 
+.client-journey-modal__status-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.client-journey-modal__reorder-hint {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
 .client-journey-modal__steps {
   display: flex;
   flex-direction: column;
@@ -1050,6 +1098,15 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.client-journey-modal__step--reorder {
+  cursor: grab;
+}
+
+.client-journey-modal__step--dragging {
+  opacity: 0.5;
+  border-color: rgba(110, 231, 249, 0.55);
 }
 
 .client-journey-modal__step strong {

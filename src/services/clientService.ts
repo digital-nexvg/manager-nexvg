@@ -1,5 +1,6 @@
 import type { Client, Payment } from '../types';
 import { normalizeClientJourney } from '../utils/clientJourney';
+import { generateId } from '../utils/id';
 import { api } from './api';
 import { notifyStorageUpdate, readStorage, writeStorage } from './storage';
 
@@ -16,7 +17,7 @@ function persistClients(clients: Client[]): void {
 
 function normalizeClient(client: Partial<Client> & { id?: string }): Client {
   return {
-    id: client.id ?? crypto.randomUUID(),
+    id: client.id ?? generateId(),
     companyName: client.companyName ?? '',
     responsible: client.responsible ?? '',
     whatsapp: client.whatsapp ?? '',
@@ -27,9 +28,11 @@ function normalizeClient(client: Partial<Client> & { id?: string }): Client {
     segment: client.segment ?? '',
     status: client.status ?? 'active',
     payments: (client.payments ?? []).map((payment) => ({
-      id: payment.id ?? crypto.randomUUID(),
+      id: payment.id ?? generateId(),
       description: payment.description ?? '',
       value: payment.value ?? 0,
+      promotionalValue: payment.promotionalValue ?? payment.value ?? 0,
+      fixedValue: payment.fixedValue ?? payment.value ?? 0,
       dueDate: payment.dueDate ?? '',
       paymentDate: payment.paymentDate ?? '',
       month: payment.month ?? '',
@@ -42,6 +45,12 @@ function normalizeClient(client: Partial<Client> & { id?: string }): Client {
 }
 
 export async function getClients(): Promise<Client[]> {
+  const storedClients = readStoredClients();
+
+  if (storedClients.length) {
+    return storedClients;
+  }
+
   try {
     const clients = await api.get<Client[]>('/api/clients');
     const normalized = (Array.isArray(clients) ? clients : []).map(normalizeClient);
@@ -49,7 +58,7 @@ export async function getClients(): Promise<Client[]> {
     return normalized;
   } catch (error) {
     console.warn('Falling back to stored client data:', error);
-    return readStoredClients();
+    return storedClients;
   }
 }
 
@@ -77,6 +86,8 @@ export async function createClient(client: Client): Promise<Client> {
       id: payment.id,
       description: payment.description,
       value: payment.value,
+      promotionalValue: payment.promotionalValue ?? payment.value,
+      fixedValue: payment.fixedValue ?? payment.value,
       dueDate: payment.dueDate,
       paymentDate: payment.paymentDate ?? '',
       month: payment.month ?? '',
@@ -119,6 +130,8 @@ export async function updateClient(client: Client): Promise<Client> {
       id: payment.id,
       description: payment.description,
       value: payment.value,
+      promotionalValue: payment.promotionalValue ?? payment.value,
+      fixedValue: payment.fixedValue ?? payment.value,
       dueDate: payment.dueDate,
       paymentDate: payment.paymentDate ?? '',
       month: payment.month ?? '',

@@ -17,6 +17,8 @@ export type Payment = {
   id: string;
   description: string;
   value: number;
+  promotionalValue?: number;
+  fixedValue?: number;
   dueDate: string;
   paymentDate?: string;
   month?: string;
@@ -51,7 +53,7 @@ export type Client = {
 
 export type ClientFormData = Pick<
   Client,
-  'companyName' | 'responsible' | 'customStatus' | 'whatsapp' | 'email' | 'address' | 'observations' | 'segment' | 'status'
+  'companyName' | 'responsible' | 'customStatus' | 'whatsapp' | 'address' | 'observations' | 'segment' | 'status'
 >;
 
 export type DashboardMetricDetail = {

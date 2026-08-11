@@ -4,6 +4,7 @@ import { PaymentList } from '../components/pagamentos/PaymentList';
 import { StructurePaymentForm } from '../components/pagamentos/StructurePaymentForm';
 import { addPaymentsToClient, deletePaymentFromClient, getClients, updatePaymentInClient } from '../services/clientService';
 import type { Client, Payment } from '../types';
+import { generateId } from '../utils/id';
 
 function formatLocalDate(date: Date): string {
   const year = date.getFullYear();
@@ -20,6 +21,13 @@ function getTodayLocal(): string {
 function getCurrentMonthKey(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function parseMoneyInput(value: string): number {
+  const normalizedValue = value.replace(/\s/g, '').replace(',', '.');
+  const parsedValue = Number(normalizedValue);
+
+  return Number.isFinite(parsedValue) ? parsedValue : 0;
 }
 
 const today = getTodayLocal();
@@ -46,9 +54,11 @@ const buildYearlyMonthlySchedule = (baseDate: string, value: number): Payment[] 
     dueDate.setMonth(start.getMonth() + index);
 
     return {
-      id: crypto.randomUUID(),
+      id: generateId(),
       description: 'Mensalidade',
       value,
+      promotionalValue: value,
+      fixedValue: value,
       dueDate: formatLocalDate(dueDate),
       month: formatLocalDate(dueDate).slice(0, 7),
       createdMonth: getCurrentMonthKey(),
@@ -56,6 +66,16 @@ const buildYearlyMonthlySchedule = (baseDate: string, value: number): Payment[] 
       paid: false,
     };
   });
+};
+
+const isOnOrBeforeDueDate = (dueDate: string, paymentDate: string) => paymentDate <= dueDate;
+
+const resolveMonthlyPaymentValue = (payment: Payment, paymentDate: string): number => {
+  if (isOnOrBeforeDueDate(payment.dueDate, paymentDate)) {
+    return payment.promotionalValue ?? payment.value;
+  }
+
+  return payment.fixedValue ?? payment.value;
 };
 
 export function PagamentosPage() {
@@ -68,7 +88,8 @@ export function PagamentosPage() {
   const [installmentsQuantity, setInstallmentsQuantity] = useState(1);
   const [startDate, setStartDate] = useState(today);
   const [scheduleDates, setScheduleDates] = useState<string[]>([today]);
-  const [monthlyValue, setMonthlyValue] = useState(0);
+  const [monthlyPromotionalValue, setMonthlyPromotionalValue] = useState(0);
+  const [monthlyFixedValue, setMonthlyFixedValue] = useState(0);
   const [dueDate, setDueDate] = useState(today);
 
   useEffect(() => {
@@ -101,7 +122,7 @@ export function PagamentosPage() {
     }
 
     const payments: Payment[] = scheduleDates.map((date, index) => ({
-      id: crypto.randomUUID(),
+      id: generateId(),
       description: `Cobrança da estrutura ${index + 1}`,
       value: Number(structureValue),
       dueDate: date,
@@ -121,23 +142,64 @@ export function PagamentosPage() {
 
   const handleSubmitMonthly = async () => {
     if (!selectedClientId) {
+      alert('Selecione uma empresa antes de salvar a mensalidade.');
       return;
     }
 
-    const nextClients = await addPaymentsToClient(selectedClientId, buildYearlyMonthlySchedule(dueDate, Number(monthlyValue)));
+    const promotionalValue = monthlyPromotionalValue;
+    const fixedValue = monthlyFixedValue;
+    const nextClients = await addPaymentsToClient(
+      selectedClientId,
+      buildYearlyMonthlySchedule(dueDate, promotionalValue).map((payment) => ({
+        ...payment,
+        promotionalValue,
+        fixedValue,
+        value: promotionalValue,
+      })),
+    );
     setClients(nextClients);
-    setMonthlyValue(0);
+    setMonthlyPromotionalValue(0);
+    setMonthlyFixedValue(0);
     setDueDate(today);
   };
 
-  const handleTogglePayment = async (clientId: string, paymentId: string, paid: boolean) => {
-    const nextClients = await updatePaymentInClient(clientId, paymentId, { paid, status: paid ? 'paid' : 'pending' });
+  const handleTogglePayment = async (clientId: string, paymentId: string, paid: boolean, paymentDate?: string) => {
+    const targetClient = clients.find((client) => client.id === clientId);
+    const targetPayment = targetClient?.payments.find((payment) => payment.id === paymentId);
+    const confirmedPaymentDate = paid ? paymentDate || today : '';
+
+    const nextClients = await updatePaymentInClient(
+      clientId,
+      paymentId,
+      targetPayment
+        ? {
+            paid,
+            status: paid ? 'paid' : 'pending',
+            paymentDate: confirmedPaymentDate,
+            value: resolveMonthlyPaymentValue(targetPayment, confirmedPaymentDate || today),
+          }
+        : { paid, status: paid ? 'paid' : 'pending', paymentDate: confirmedPaymentDate },
+    );
     setClients(nextClients);
   };
 
   const handleDeletePayment = async (clientId: string, paymentId: string) => {
-    const nextClients = await deletePaymentFromClient(clientId, paymentId);
+    const previousClients = clients;
+    const nextClients = previousClients.map((client) =>
+      client.id === clientId
+        ? { ...client, payments: client.payments.filter((payment) => payment.id !== paymentId) }
+        : client,
+    );
+
     setClients(nextClients);
+
+    try {
+      await deletePaymentFromClient(clientId, paymentId);
+    } catch (error) {
+      console.error('Erro ao excluir pagamento:', error);
+      setClients(previousClients);
+      alert('Não foi possível excluir a mensalidade. Tente novamente.');
+    }
   };
 
   return (
@@ -259,10 +321,12 @@ export function PagamentosPage() {
                   clients={clients}
                   selectedClientId={selectedClientId}
                   dueDate={dueDate}
-                  monthlyValue={monthlyValue}
+                  promotionalValue={monthlyPromotionalValue}
+                  fixedValue={monthlyFixedValue}
                   onSelectedClientIdChange={(clientId) => setSelectedClientId(clientId || null)}
                   onDueDateChange={(value) => setDueDate(value)}
-                  onMonthlyValueChange={(value) => setMonthlyValue(Number(value))}
+                  onPromotionalValueChange={(value) => setMonthlyPromotionalValue(parseMoneyInput(value))}
+                  onFixedValueChange={(value) => setMonthlyFixedValue(parseMoneyInput(value))}
                   onSubmit={handleSubmitMonthly}
                 />
               )}

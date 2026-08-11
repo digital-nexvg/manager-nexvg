@@ -1,9 +1,13 @@
+import { readStorage, writeStorage } from './storage';
+
+const SEGMENTS_STORAGE_KEY = 'nexvg-segments';
+
 export function getSegments(): string[] {
-  return [];
+  return readStorage<string[]>(SEGMENTS_STORAGE_KEY, []);
 }
 
-export function saveSegments(_segments: string[]): void {
-  // segment persistence is handled by the backend when available
+export function saveSegments(segments: string[]): void {
+  writeStorage(SEGMENTS_STORAGE_KEY, segments);
 }
 
 export function createSegment(name: string): string[] {

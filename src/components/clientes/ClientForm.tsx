@@ -24,6 +24,16 @@ export function ClientForm({
 
   useEffect(() => {
     setSegments(getSegments());
+
+    const handleStorageUpdate = () => {
+      setSegments(getSegments());
+    };
+
+    window.addEventListener('nexvg-storage-update', handleStorageUpdate);
+
+    return () => {
+      window.removeEventListener('nexvg-storage-update', handleStorageUpdate);
+    };
   }, []);
 
   const availableSegments = useMemo(() => segments, [segments]);
@@ -61,15 +71,6 @@ export function ClientForm({
             required
             value={formData.responsible}
             onChange={(event) => onChange('responsible', event.target.value)}
-          />
-        </label>
-
-        <label>
-          <span>Email</span>
-          <input
-            type="email"
-            value={formData.email}
-            onChange={(event) => onChange('email', event.target.value)}
           />
         </label>
 

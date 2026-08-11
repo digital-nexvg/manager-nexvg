@@ -42,20 +42,61 @@ function isPaymentInDueMonth(payment: Payment, monthKey: string): boolean {
   return paymentMonth === monthKey;
 }
 
+function isPaymentInReceivedMonth(payment: Payment, monthKey: string): boolean {
+  const baseDate = payment.paymentDate ? parseDateOnly(payment.paymentDate) : parseDateOnly(payment.dueDate);
+
+  return getMonthKey(baseDate) === monthKey;
+}
+
 function getMonthLabel(date: Date): string {
   return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 }
 
-function buildMonthMetrics(payments: Array<Payment & { clientName: string }>, monthDate: Date): DashboardMetric[] {
-  const monthKey = getMonthKey(monthDate);
-  const billingMonthPayments = payments.filter((payment) => {
+type StructureGroup = {
+  key: string;
+  clientName: string;
+  createdMonth: string;
+  latestDueDate: string;
+};
+
+function buildStructureGroups(payments: Array<Payment & { clientName: string }>): StructureGroup[] {
+  const groups = new Map<string, StructureGroup>();
+
+  for (const payment of payments) {
     if (isMonthlyPayment(payment)) {
-      return isPaymentInDueMonth(payment, monthKey);
+      continue;
     }
 
-    return isPaymentInCreatedMonth(payment, monthKey);
-  });
-  const paidMonthPayments = payments.filter((payment) => payment.paid && isPaymentInDueMonth(payment, monthKey));
+    const createdMonth = payment.createdMonth ?? payment.month ?? getMonthKey(parseDateOnly(payment.dueDate));
+    const key = `${payment.clientName.trim().toLowerCase()}::${createdMonth}`;
+    const existing = groups.get(key);
+
+    if (!existing) {
+      groups.set(key, {
+        key,
+        clientName: payment.clientName,
+        createdMonth,
+        latestDueDate: payment.dueDate,
+      });
+      continue;
+    }
+
+    if (parseDateOnly(payment.dueDate).getTime() > parseDateOnly(existing.latestDueDate).getTime()) {
+      existing.latestDueDate = payment.dueDate;
+    }
+  }
+
+  return Array.from(groups.values());
+}
+
+function buildMonthMetrics(payments: Array<Payment & { clientName: string }>, monthDate: Date): DashboardMetric[] {
+  const STRUCTURE_PRODUCTION_COST = 40;
+  const monthKey = getMonthKey(monthDate);
+  const billingMonthPayments = payments.filter((payment) => isPaymentInDueMonth(payment, monthKey));
+  const contractedStructurePayments = payments.filter(
+    (payment) => !isMonthlyPayment(payment) && isPaymentInCreatedMonth(payment, monthKey),
+  );
+  const paidMonthPayments = payments.filter((payment) => payment.paid && isPaymentInReceivedMonth(payment, monthKey));
   const pendingMonthPayments = payments.filter((payment) => !payment.paid && isPaymentInDueMonth(payment, monthKey));
   const overdueMonthPayments = pendingMonthPayments.filter((payment) => getPaymentStatus(payment) === 'overdue');
 
@@ -63,6 +104,22 @@ function buildMonthMetrics(payments: Array<Payment & { clientName: string }>, mo
   const pendingValue = pendingMonthPayments.reduce((sum, payment) => sum + payment.value, 0);
   const overdueValue = overdueMonthPayments.reduce((sum, payment) => sum + payment.value, 0);
   const billingValue = billingMonthPayments.reduce((sum, payment) => sum + payment.value, 0);
+  const monthlyBillingValue = billingMonthPayments
+    .filter((payment) => isMonthlyPayment(payment))
+    .reduce((sum, payment) => sum + payment.value, 0);
+  const structureBillingValue = billingMonthPayments
+    .filter((payment) => !isMonthlyPayment(payment))
+    .reduce((sum, payment) => sum + payment.value, 0);
+  const contractedRevenueValue = contractedStructurePayments.reduce((sum, payment) => sum + payment.value, 0);
+  const structureGroups = buildStructureGroups(payments);
+  const structureGroupsEndingInMonth = structureGroups.filter(
+    (group) => getMonthKey(parseDateOnly(group.latestDueDate)) === monthKey,
+  );
+  const contractedStructureCompanies = new Set(
+    contractedStructurePayments.map((payment) => payment.clientName.trim().toLowerCase()),
+  );
+  const productionCostValue = structureGroupsEndingInMonth.length * STRUCTURE_PRODUCTION_COST;
+  const netBillingValue = billingValue - productionCostValue;
 
   const nextDuePayment = pendingMonthPayments
     .slice()
@@ -81,10 +138,29 @@ function buildMonthMetrics(payments: Array<Payment & { clientName: string }>, mo
     {
       title: 'Faturamento',
       value: formatCurrency(billingValue),
-      subtitle: `Cobranças de ${getMonthLabel(monthDate)}`,
+      subtitle: `Mensalidades: ${formatCurrency(monthlyBillingValue)} • Estruturas: ${formatCurrency(structureBillingValue)}\nFaturamento líquido: ${formatCurrency(netBillingValue)}`,
       tone: 'positive',
       icon: '↗',
       details: buildPaymentDetails(billingMonthPayments),
+    },
+    {
+      title: 'Receita Contratada',
+      value: formatCurrency(contractedRevenueValue),
+      subtitle: `${contractedStructureCompanies.size} empresas com estrutura gerada no mês`,
+      tone: 'warning',
+      icon: '📄',
+      details: buildPaymentDetails(contractedStructurePayments),
+    },
+    {
+      title: 'Custo de Produção',
+      value: formatCurrency(productionCostValue),
+      subtitle: `${structureGroupsEndingInMonth.length} estruturas finalizadas x ${formatCurrency(STRUCTURE_PRODUCTION_COST)}`,
+      tone: 'danger',
+      icon: '⚙',
+      details: structureGroupsEndingInMonth.map((group) => ({
+        label: group.clientName,
+        value: `Última parcela: ${formatDate(group.latestDueDate)} • ${formatCurrency(STRUCTURE_PRODUCTION_COST)}`,
+      })),
     },
     {
       title: 'Recebido',

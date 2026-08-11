@@ -4,10 +4,12 @@ type MonthlyPaymentFormProps = {
   clients: Client[];
   selectedClientId: string | null;
   dueDate: string;
-  monthlyValue: number;
+  promotionalValue: number;
+  fixedValue: number;
   onSelectedClientIdChange: (clientId: string) => void;
   onDueDateChange: (value: string) => void;
-  onMonthlyValueChange: (value: string) => void;
+  onPromotionalValueChange: (value: string) => void;
+  onFixedValueChange: (value: string) => void;
   onSubmit: () => void;
 };
 
@@ -15,10 +17,12 @@ export function MonthlyPaymentForm({
   clients,
   selectedClientId,
   dueDate,
-  monthlyValue,
+  promotionalValue,
+  fixedValue,
   onSelectedClientIdChange,
   onDueDateChange,
-  onMonthlyValueChange,
+  onPromotionalValueChange,
+  onFixedValueChange,
   onSubmit,
 }: MonthlyPaymentFormProps) {
   return (
@@ -48,13 +52,24 @@ export function MonthlyPaymentForm({
         </label>
 
         <label>
-          <span>Valor da mensalidade</span>
+          <span>Valor promocional</span>
           <input
             type="number"
             min="0"
             step="0.01"
-            value={monthlyValue}
-            onChange={(event) => onMonthlyValueChange(event.target.value)}
+            value={promotionalValue}
+            onChange={(event) => onPromotionalValueChange(event.target.value)}
+          />
+        </label>
+
+        <label>
+          <span>Valor fixo após vencimento</span>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={fixedValue}
+            onChange={(event) => onFixedValueChange(event.target.value)}
           />
         </label>
       </div>

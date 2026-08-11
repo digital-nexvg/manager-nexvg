@@ -6,23 +6,23 @@ import { SearchInput } from '../components/common/SearchInput';
 import { createClient, deleteClient, getClients, updateClient } from '../services/clientService';
 import type { Client, ClientFormData } from '../types';
 import { getClientJourneyCompletionStatus } from '../utils/clientJourney';
+import { generateId } from '../utils/id';
 
-const emptyForm: ClientFormData = {
+const createEmptyForm = (segment = ''): ClientFormData => ({
   companyName: '',
   responsible: '',
   customStatus: 'Novo Cliente',
   whatsapp: '',
-  email: '',
   address: '',
   observations: '',
-  segment: '',
+  segment,
   status: 'active',
-};
+});
 
 export function ClientesPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState('');
-  const [formData, setFormData] = useState<ClientFormData>(emptyForm);
+  const [formData, setFormData] = useState<ClientFormData>(createEmptyForm());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showSegmentForm, setShowSegmentForm] = useState(false);
@@ -60,8 +60,8 @@ export function ClientesPage() {
     setFormData((current) => ({ ...current, [field]: value }));
   };
 
-  const resetForm = () => {
-    setFormData(emptyForm);
+  const resetForm = (keepSegment = false) => {
+    setFormData(createEmptyForm(keepSegment ? formData.segment ?? '' : ''));
     setEditingId(null);
     setShowForm(false);
     setShowSegmentForm(false);
@@ -71,7 +71,7 @@ export function ClientesPage() {
     setShowSegmentForm(false);
     setShowForm(true);
     setEditingId(null);
-    setFormData(emptyForm);
+    setFormData(createEmptyForm(formData.segment ?? ''));
     setIsClientsVisible(true);
   };
 
@@ -85,8 +85,9 @@ export function ClientesPage() {
     const existingClient = clients.find((client) => client.id === editingId);
 
     const payload: Client = {
-      id: editingId ?? crypto.randomUUID(),
+      id: editingId ?? generateId(),
       ...formData,
+      email: existingClient?.email,
       payments: existingClient?.payments ?? [],
       journey: existingClient?.journey,
     };
@@ -100,7 +101,7 @@ export function ClientesPage() {
 
       const nextClients = await getClients();
       setClients(nextClients);
-      resetForm();
+      resetForm(true);
     } catch (error) {
       console.error('Erro ao salvar cliente:', error);
       const message = error instanceof Error ? error.message : 'Não foi possível salvar o cliente.';
@@ -117,7 +118,6 @@ export function ClientesPage() {
       responsible: client.responsible,
       customStatus: client.customStatus ?? '',
       whatsapp: client.whatsapp ?? '',
-      email: client.email ?? '',
       address: client.address ?? '',
       observations: client.observations ?? '',
       segment: client.segment ?? '',
@@ -143,6 +143,7 @@ export function ClientesPage() {
     });
     const nextClients = await getClients();
     setClients(nextClients);
+    return nextClients.find((nextClient) => nextClient.id === client.id) ?? client;
   };
 
   return (
@@ -162,7 +163,7 @@ export function ClientesPage() {
                 setIsClientsVisible(true);
               }
             }}
-            placeholder="Buscar por empresa, responsável ou email"
+            placeholder="Buscar por empresa, responsável ou contato"
           />
 
           <button type="button" className="btn btn--secondary" onClick={handleOpenAddClient}>
@@ -194,7 +195,7 @@ export function ClientesPage() {
               <div className="clients-page__form-card clients-page__form-card--top">
                 <div className="clients-page__form-head">
                   <h2>{editingId ? 'Editar cliente' : 'Adicionar cliente'}</h2>
-                  <button type="button" className="btn btn--ghost btn--close" onClick={resetForm} aria-label="Fechar formulário">
+                  <button type="button" className="btn btn--ghost btn--close" onClick={() => resetForm()} aria-label="Fechar formulário">
                     ×
                   </button>
                 </div>
