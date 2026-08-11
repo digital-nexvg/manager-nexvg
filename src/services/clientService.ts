@@ -15,6 +15,13 @@ function persistClients(clients: Client[]): void {
   writeStorage(CLIENTS_STORAGE_KEY, clients.map(normalizeClient));
 }
 
+async function fetchClientsFromApi(): Promise<Client[]> {
+  const clients = await api.get<Client[]>('/api/clients');
+  const normalized = (Array.isArray(clients) ? clients : []).map(normalizeClient);
+  persistClients(normalized);
+  return normalized;
+}
+
 function normalizeClient(client: Partial<Client> & { id?: string }): Client {
   return {
     id: client.id ?? generateId(),
@@ -47,15 +54,8 @@ function normalizeClient(client: Partial<Client> & { id?: string }): Client {
 export async function getClients(): Promise<Client[]> {
   const storedClients = readStoredClients();
 
-  if (storedClients.length) {
-    return storedClients;
-  }
-
   try {
-    const clients = await api.get<Client[]>('/api/clients');
-    const normalized = (Array.isArray(clients) ? clients : []).map(normalizeClient);
-    persistClients(normalized);
-    return normalized;
+    return await fetchClientsFromApi();
   } catch (error) {
     console.warn('Falling back to stored client data:', error);
     return storedClients;
@@ -107,11 +107,17 @@ export async function createClient(client: Client): Promise<Client> {
   };
 
   const created = await api.post<{ id: string }>('/api/clients', payload);
-  const nextClient = { ...normalized, id: created?.id ?? normalized.id };
-  const nextClients = [...readStoredClients(), nextClient];
-  persistClients(nextClients);
-  notifyStorageUpdate();
-  return nextClient;
+  try {
+    const refreshedClients = await fetchClientsFromApi();
+    notifyStorageUpdate();
+    return refreshedClients.find((item) => item.id === created?.id) ?? { ...normalized, id: created?.id ?? normalized.id };
+  } catch {
+    const nextClient = { ...normalized, id: created?.id ?? normalized.id };
+    const nextClients = [...readStoredClients(), nextClient];
+    persistClients(nextClients);
+    notifyStorageUpdate();
+    return nextClient;
+  }
 }
 
 export async function updateClient(client: Client): Promise<Client> {
@@ -151,16 +157,27 @@ export async function updateClient(client: Client): Promise<Client> {
   };
 
   await api.put(`/api/clients/${normalized.id}`, payload);
-  const nextClients = readStoredClients().map((client) => (client.id === normalized.id ? normalized : client));
-  persistClients(nextClients);
-  notifyStorageUpdate();
-  return normalized;
+
+  try {
+    const refreshedClients = await fetchClientsFromApi();
+    notifyStorageUpdate();
+    return refreshedClients.find((item) => item.id === normalized.id) ?? normalized;
+  } catch {
+    const nextClients = readStoredClients().map((storedClient) => (storedClient.id === normalized.id ? normalized : storedClient));
+    persistClients(nextClients);
+    notifyStorageUpdate();
+    return normalized;
+  }
 }
 
 export async function deleteClient(id: string): Promise<void> {
   await api.delete(`/api/clients/${id}`);
-  const nextClients = readStoredClients().filter((client) => client.id !== id);
-  persistClients(nextClients);
+  try {
+    await fetchClientsFromApi();
+  } catch {
+    const nextClients = readStoredClients().filter((client) => client.id !== id);
+    persistClients(nextClients);
+  }
   notifyStorageUpdate();
 }
 
