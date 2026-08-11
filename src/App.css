@@ -1247,25 +1247,92 @@
   gap: 18px;
 }
 
-.structure-payment-form__grid,
-.monthly-payment-form__grid {
+.structure-payment-form__table,
+.monthly-payment-form__table {
+  border: 1px solid rgba(79, 140, 255, 0.2);
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.72);
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.18);
+}
+
+.structure-payment-form__table-head,
+.monthly-payment-form__table-head {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px 14px;
+  background: linear-gradient(180deg, rgba(79, 140, 255, 0.16), rgba(79, 140, 255, 0.08));
+  border-bottom: 1px solid rgba(79, 140, 255, 0.2);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8fefff;
+}
+
+.structure-payment-form__table-body,
+.monthly-payment-form__table-body {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+}
+
+.structure-payment-form__table-cell,
+.monthly-payment-form__table-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-right: 1px solid rgba(79, 140, 255, 0.12);
+  border-bottom: 1px solid rgba(79, 140, 255, 0.12);
+  min-height: 100%;
+}
+
+.structure-payment-form__table-cell:last-child,
+.monthly-payment-form__table-cell:last-child {
+  border-right: 0;
+}
+
+.structure-payment-form__mobile-label,
+.monthly-payment-form__mobile-label {
+  display: none;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #8fefff;
+  letter-spacing: 0.04em;
 }
 
 @media (max-width: 768px) {
-  .structure-payment-form__grid,
-  .monthly-payment-form__grid {
-    grid-template-columns: repeat(4, minmax(150px, 1fr));
-    overflow-x: auto;
-    grid-auto-flow: column;
-    padding-bottom: 4px;
+  .structure-payment-form__table-head,
+  .monthly-payment-form__table-head {
+    display: none;
   }
 
-  .structure-payment-form__grid > label,
-  .monthly-payment-form__grid > label {
-    min-width: 150px;
+  .structure-payment-form__table-body,
+  .monthly-payment-form__table-body {
+    grid-template-columns: 1fr;
+  }
+
+  .structure-payment-form__table-cell,
+  .monthly-payment-form__table-cell {
+    border-right: 0;
+    border-bottom: 1px solid rgba(79, 140, 255, 0.12);
+  }
+
+  .structure-payment-form__mobile-label,
+  .monthly-payment-form__mobile-label {
+    display: block;
+  }
+
+  .structure-payment-form__summary {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .structure-payment-form__calendar {
+    grid-template-columns: 1fr;
   }
 }
 

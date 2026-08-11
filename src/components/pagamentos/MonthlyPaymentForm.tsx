@@ -33,10 +33,17 @@ export function MonthlyPaymentForm({
         onSubmit();
       }}
     >
-      <div className="monthly-payment-form__grid">
-        <label>
-          <span>Empresa</span>
-          <select value={selectedClientId ?? ''} onChange={(event) => onSelectedClientIdChange(event.target.value)}>
+      <div className="monthly-payment-form__table" role="table" aria-label="Cadastro de mensalidade">
+        <div className="monthly-payment-form__table-head" role="row">
+          <span role="columnheader">Empresa</span>
+          <span role="columnheader">Data de vencimento</span>
+          <span role="columnheader">Valor promocional</span>
+          <span role="columnheader">Valor fixo</span>
+        </div>
+        <div className="monthly-payment-form__table-body" role="rowgroup">
+          <label className="monthly-payment-form__table-cell" role="row">
+            <span className="monthly-payment-form__mobile-label">Empresa</span>
+            <select value={selectedClientId ?? ''} onChange={(event) => onSelectedClientIdChange(event.target.value)}>
             <option value="">Selecione a empresa</option>
             {clients.map((client) => (
               <option key={client.id} value={client.id}>
@@ -46,32 +53,33 @@ export function MonthlyPaymentForm({
           </select>
         </label>
 
-        <label>
-          <span>Data de vencimento</span>
-          <input type="date" value={dueDate} onChange={(event) => onDueDateChange(event.target.value)} />
-        </label>
+          <label className="monthly-payment-form__table-cell" role="row">
+            <span className="monthly-payment-form__mobile-label">Data de vencimento</span>
+            <input type="date" value={dueDate} onChange={(event) => onDueDateChange(event.target.value)} />
+          </label>
 
-        <label>
-          <span>Valor promocional</span>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={promotionalValue}
-            onChange={(event) => onPromotionalValueChange(event.target.value)}
-          />
-        </label>
+          <label className="monthly-payment-form__table-cell" role="row">
+            <span className="monthly-payment-form__mobile-label">Valor promocional</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={promotionalValue}
+              onChange={(event) => onPromotionalValueChange(event.target.value)}
+            />
+          </label>
 
-        <label>
-          <span>Valor fixo após vencimento</span>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={fixedValue}
-            onChange={(event) => onFixedValueChange(event.target.value)}
-          />
-        </label>
+          <label className="monthly-payment-form__table-cell" role="row">
+            <span className="monthly-payment-form__mobile-label">Valor fixo após vencimento</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={fixedValue}
+              onChange={(event) => onFixedValueChange(event.target.value)}
+            />
+          </label>
+        </div>
       </div>
 
       <div className="monthly-payment-form__actions">

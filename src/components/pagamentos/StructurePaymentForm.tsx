@@ -41,10 +41,17 @@ export function StructurePaymentForm({
         onSubmit();
       }}
     >
-      <div className="structure-payment-form__grid">
-        <label>
-          <span>Empresa</span>
-          <select value={selectedClientId ?? ''} onChange={(event) => onSelectedClientIdChange(event.target.value)}>
+      <div className="structure-payment-form__table" role="table" aria-label="Cadastro de cobrança de estrutura">
+        <div className="structure-payment-form__table-head" role="row">
+          <span role="columnheader">Empresa</span>
+          <span role="columnheader">Valor da parcela</span>
+          <span role="columnheader">Qtd. parcelas</span>
+          <span role="columnheader">Data inicial</span>
+        </div>
+        <div className="structure-payment-form__table-body" role="rowgroup">
+          <label className="structure-payment-form__table-cell" role="row">
+            <span className="structure-payment-form__mobile-label">Empresa</span>
+            <select value={selectedClientId ?? ''} onChange={(event) => onSelectedClientIdChange(event.target.value)}>
             <option value="">Selecione a empresa</option>
             {clients.map((client) => (
               <option key={client.id} value={client.id}>
@@ -54,32 +61,33 @@ export function StructurePaymentForm({
           </select>
         </label>
 
-        <label>
-          <span>Valor da parcela</span>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={installmentValue}
-            onChange={(event) => onInstallmentValueChange(event.target.value)}
-          />
-        </label>
+          <label className="structure-payment-form__table-cell" role="row">
+            <span className="structure-payment-form__mobile-label">Valor da parcela</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={installmentValue}
+              onChange={(event) => onInstallmentValueChange(event.target.value)}
+            />
+          </label>
 
-        <label>
-          <span>Quantidade de parcelas</span>
-          <input
-            type="number"
-            min="1"
-            step="1"
-            value={installmentsQuantity}
-            onChange={(event) => onInstallmentsQuantityChange(event.target.value)}
-          />
-        </label>
+          <label className="structure-payment-form__table-cell" role="row">
+            <span className="structure-payment-form__mobile-label">Quantidade de parcelas</span>
+            <input
+              type="number"
+              min="1"
+              step="1"
+              value={installmentsQuantity}
+              onChange={(event) => onInstallmentsQuantityChange(event.target.value)}
+            />
+          </label>
 
-        <label>
-          <span>Data inicial</span>
-          <input type="date" value={startDate} onChange={(event) => onStartDateChange(event.target.value)} />
-        </label>
+          <label className="structure-payment-form__table-cell" role="row">
+            <span className="structure-payment-form__mobile-label">Data inicial</span>
+            <input type="date" value={startDate} onChange={(event) => onStartDateChange(event.target.value)} />
+          </label>
+        </div>
       </div>
 
       <div className="structure-payment-form__summary">
