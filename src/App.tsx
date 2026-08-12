@@ -3,9 +3,10 @@ import './App.css';
 import { DashboardOverview } from './components/dashboard/DashboardOverview';
 import { ClientesPage } from './pages/ClientesPage';
 import { PagamentosPage } from './pages/PagamentosPage';
+import { TarefasPage } from './pages/TarefasPage';
 import { LoginPage } from './pages/LoginPage';
 
-type SectionKey = 'dashboard' | 'clientes' | 'financeiro';
+type SectionKey = 'dashboard' | 'clientes' | 'financeiro' | 'tarefas';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -136,6 +137,9 @@ function App() {
       <button type="button" className={`mobile-nav__button ${activeSection === 'financeiro' ? 'is-active' : ''}`} onClick={() => handleSectionChange('financeiro')}>
         Financeiro
       </button>
+      <button type="button" className={`mobile-nav__button ${activeSection === 'tarefas' ? 'is-active' : ''}`} onClick={() => handleSectionChange('tarefas')}>
+        Tarefas
+      </button>
       <button type="button" className="mobile-nav__button mobile-nav__button--logout" onClick={handleLogout}>
         Sair
       </button>
@@ -175,12 +179,24 @@ function App() {
               <PagamentosPage />
             </>
           ) : null}
+          {activeSection === 'tarefas' ? (
+            <>
+              {mobileMenu}
+              <div className="mobile-nav__back-wrap">
+                <button type="button" className="btn btn--secondary" onClick={() => handleSectionChange('dashboard')}>
+                  Voltar para o início
+                </button>
+              </div>
+              <TarefasPage />
+            </>
+          ) : null}
         </>
       ) : (
         <>
           <DashboardOverview />
           <ClientesPage />
           <PagamentosPage />
+          <TarefasPage />
         </>
       )}
     </main>

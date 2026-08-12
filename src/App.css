@@ -323,7 +323,8 @@
 
 .dashboard-shell,
 .clients-page,
-.payments-page {
+.payments-page,
+.tasks-page {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -346,9 +347,16 @@
   border-top: 1px solid rgba(148, 163, 184, 0.18);
 }
 
+.tasks-page {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
 .dashboard-header,
 .clients-page__header,
-.payments-page__header {
+.payments-page__header,
+.tasks-page__header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -426,7 +434,8 @@
 
 .dashboard-header h1,
 .clients-page h1,
-.payments-page h1 {
+.payments-page h1,
+.tasks-page h1 {
   font-size: clamp(2rem, 4vw, 3rem);
   line-height: 1.05;
 }
@@ -567,13 +576,108 @@
 .clients-page__form-card,
 .clients-page__table-card,
 .payments-page__form-card,
-.payments-page__list-card {
+.payments-page__list-card,
+.tasks-page__list-card {
   border-radius: 16px;
   background: linear-gradient(180deg, rgba(10, 20, 38, 0.94), rgba(8, 18, 34, 0.9));
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   padding: 12px;
   min-width: 0;
+}
+
+.tasks-page__content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tasks-page__hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(8, 15, 32, 0.95));
+  border: 1px solid rgba(110, 231, 249, 0.18);
+  box-shadow: var(--shadow);
+}
+
+.tasks-page__hero-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tasks-page__hero-copy h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--text-strong);
+}
+
+.tasks-page__hero-copy p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.tasks-page__filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tasks-page__filter-control {
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--text-muted);
+}
+
+.tasks-page__filter-control select {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 36px;
+  border: 1px solid rgba(79, 140, 255, 0.26);
+  border-radius: 10px;
+  padding: 0 10px;
+  background: linear-gradient(180deg, #0f172a, #111c2d);
+  color: #5f6875;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.tasks-page__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.tasks-page__stat-card {
+  border-radius: 12px;
+  padding: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tasks-page__stat-card span {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.tasks-page__stat-card strong {
+  color: var(--text-strong);
+  font-size: 1.3rem;
+}
+
+.tasks-table td,
+.tasks-table th {
+  white-space: nowrap;
 }
 
 .payments-page__hero {
