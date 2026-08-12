@@ -649,6 +649,20 @@
   font-size: 0.95rem;
 }
 
+.tasks-page__check-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.tasks-page__check-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: #22c55e;
+}
+
 .tasks-page__stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -673,6 +687,90 @@
 .tasks-page__stat-card strong {
   color: var(--text-strong);
   font-size: 1.3rem;
+}
+
+.tasks-page__modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(2, 6, 23, 0.68);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.tasks-page__modal-card {
+  width: min(760px, 100%);
+  max-height: min(84vh, 760px);
+  overflow: auto;
+  border-radius: 20px;
+  padding: 20px;
+  background: linear-gradient(180deg, #0f172a, #111c2d);
+  border: 1px solid rgba(79, 140, 255, 0.24);
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tasks-page__modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.tasks-page__modal-header h3 {
+  margin: 0;
+  color: var(--text-strong);
+}
+
+.tasks-page__modal-header p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+}
+
+.tasks-page__modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tasks-page__completed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tasks-page__completed-item {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.tasks-page__completed-item--selected {
+  border-color: rgba(248, 113, 113, 0.55);
+  background: rgba(127, 29, 29, 0.3);
+}
+
+.tasks-page__completed-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tasks-page__completed-main strong {
+  color: var(--text-strong);
+}
+
+.tasks-page__completed-main p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
 }
 
 .tasks-table td,
