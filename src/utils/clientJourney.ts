@@ -43,6 +43,19 @@ export function normalizeClientJourney(journey?: ClientJourney): ClientJourney {
       };
     });
 
+  const customCurrentSteps = currentSteps
+    .filter((step) => !templateById.has(step.id) && !seenIds.has(step.id) && step.label.trim())
+    .map((step) => {
+      seenIds.add(step.id);
+
+      return {
+        id: step.id,
+        label: step.label.trim(),
+        done: Boolean(step.done),
+        doneAt: step.doneAt,
+      };
+    });
+
   const missingTemplateSteps = CLIENT_JOURNEY_STEPS_TEMPLATE.filter((step) => !seenIds.has(step.id)).map((step) => ({
     ...step,
     done: false,
@@ -51,7 +64,7 @@ export function normalizeClientJourney(journey?: ClientJourney): ClientJourney {
 
   return {
     notes: journey?.notes ?? '',
-    steps: [...normalizedCurrent, ...missingTemplateSteps],
+    steps: [...normalizedCurrent, ...customCurrentSteps, ...missingTemplateSteps],
   };
 }
 

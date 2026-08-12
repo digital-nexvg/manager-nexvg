@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Client, ClientJourneyStep } from '../../types';
 import { getNextPendingJourneyStep, normalizeClientJourney } from '../../utils/clientJourney';
+import { generateId } from '../../utils/id';
 
 type ClientJourneyModalProps = {
   isOpen: boolean;
@@ -15,6 +16,11 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
   const [notes, setNotes] = useState('');
   const [isReorderMode, setIsReorderMode] = useState(false);
   const [draggedStepId, setDraggedStepId] = useState<string | null>(null);
+  const [isAddingStep, setIsAddingStep] = useState(false);
+  const [newStepLabel, setNewStepLabel] = useState('');
+  const [hideCompletedSteps, setHideCompletedSteps] = useState(false);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [selectedStepIds, setSelectedStepIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!client) {
@@ -26,9 +32,15 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
     setNotes(normalizedJourney.notes);
     setIsReorderMode(false);
     setDraggedStepId(null);
+    setIsAddingStep(false);
+    setNewStepLabel('');
+    setHideCompletedSteps(false);
+    setIsDeleteMode(false);
+    setSelectedStepIds([]);
   }, [client]);
 
   const nextStep = useMemo(() => getNextPendingJourneyStep(steps), [steps]);
+  const visibleSteps = useMemo(() => steps.filter((step) => !hideCompletedSteps || !step.done), [hideCompletedSteps, steps]);
 
   if (!isOpen || !client) {
     return null;
@@ -72,6 +84,22 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
     });
   };
 
+  const toggleStepSelection = (stepId: string) => {
+    setSelectedStepIds((current) =>
+      current.includes(stepId) ? current.filter((currentStepId) => currentStepId !== stepId) : [...current, stepId],
+    );
+  };
+
+  const handleDeleteSelectedSteps = () => {
+    if (!selectedStepIds.length) {
+      return;
+    }
+
+    setSteps((current) => current.filter((step) => !selectedStepIds.includes(step.id)));
+    setSelectedStepIds([]);
+    setIsDeleteMode(false);
+  };
+
   const handleSave = async () => {
     await onSave({
       ...client,
@@ -81,6 +109,32 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
       },
     });
     onClose();
+  };
+
+  const handleAddStep = () => {
+    const trimmedLabel = newStepLabel.trim();
+
+    if (!trimmedLabel) {
+      return;
+    }
+
+    const nextStep: ClientJourneyStep = {
+      id: `custom-${generateId()}`,
+      label: trimmedLabel,
+      done: false,
+    };
+
+    setSteps((current) => {
+      const canceledIndex = current.findIndex((step) => step.id === 'cancelled');
+
+      if (canceledIndex < 0) {
+        return [...current, nextStep];
+      }
+
+      return [...current.slice(0, canceledIndex), nextStep, ...current.slice(canceledIndex)];
+    });
+    setIsAddingStep(false);
+    setNewStepLabel('');
   };
 
   const handleEditClient = () => {
@@ -108,35 +162,95 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
             <span>
               <strong>Proxima etapa:</strong> {nextStep ? nextStep.label : 'Fluxo concluido'}
             </span>
-            <button type="button" className="btn btn--ghost" onClick={() => setIsReorderMode((current) => !current)}>
-              {isReorderMode ? 'Finalizar reordenação' : 'Reordenar lista'}
-            </button>
+            <div className="client-journey-modal__status-actions">
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => {
+                  setIsAddingStep((current) => !current);
+                  setNewStepLabel('');
+                  setIsDeleteMode(false);
+                  setSelectedStepIds([]);
+                }}
+              >
+                {isAddingStep ? 'Cancelar etapa' : 'Adicionar etapa'}
+              </button>
+              <button type="button" className="btn btn--ghost btn--small" onClick={() => setHideCompletedSteps((current) => !current)}>
+                {hideCompletedSteps ? 'Mostrar OK' : 'Ocultar OK'}
+              </button>
+              <button
+                type="button"
+                className="btn btn--ghost btn--small"
+                onClick={() => {
+                  setIsDeleteMode((current) => !current);
+                  setSelectedStepIds([]);
+                  setIsAddingStep(false);
+                }}
+              >
+                {isDeleteMode ? 'Cancelar exclusão' : 'Apagar tarefas'}
+              </button>
+              <button type="button" className="btn btn--ghost" onClick={() => setIsReorderMode((current) => !current)}>
+                {isReorderMode ? 'Finalizar reordenação' : 'Reordenar lista'}
+              </button>
+            </div>
           </div>
+          {isAddingStep ? (
+            <div className="client-journey-modal__add-step">
+              <input
+                type="text"
+                value={newStepLabel}
+                onChange={(event) => setNewStepLabel(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    handleAddStep();
+                  }
+                }}
+                placeholder="Nome da nova etapa"
+              />
+              <button type="button" className="btn btn--primary" onClick={handleAddStep} disabled={!newStepLabel.trim()}>
+                Incluir
+              </button>
+            </div>
+          ) : null}
+          {isDeleteMode ? (
+            <div className="client-journey-modal__delete-bar">
+              <span>{selectedStepIds.length ? `${selectedStepIds.length} tarefa(s) selecionada(s)` : 'Selecione as tarefas para apagar'}</span>
+              <button
+                type="button"
+                className="btn btn--secondary btn--small"
+                onClick={handleDeleteSelectedSteps}
+                disabled={!selectedStepIds.length}
+              >
+                Apagar selecionadas
+              </button>
+            </div>
+          ) : null}
           {isReorderMode ? <p className="client-journey-modal__reorder-hint">Arraste e solte as etapas para posicionar.</p> : null}
         </div>
 
         <div className="client-journey-modal__steps">
-          {steps.map((step) => (
+          {visibleSteps.map((step) => (
             <div
               key={step.id}
-              className={`client-journey-modal__step${isReorderMode ? ' client-journey-modal__step--reorder' : ''}${draggedStepId === step.id ? ' client-journey-modal__step--dragging' : ''}`}
-              draggable={isReorderMode}
+              className={`client-journey-modal__step${isReorderMode ? ' client-journey-modal__step--reorder' : ''}${draggedStepId === step.id ? ' client-journey-modal__step--dragging' : ''}${isDeleteMode && selectedStepIds.includes(step.id) ? ' client-journey-modal__step--selected' : ''}`}
+              draggable={isReorderMode && !isDeleteMode}
               onDragStart={() => {
-                if (!isReorderMode) {
+                if (!isReorderMode || isDeleteMode) {
                   return;
                 }
 
                 setDraggedStepId(step.id);
               }}
               onDragOver={(event) => {
-                if (!isReorderMode || !draggedStepId || draggedStepId === step.id) {
+                if (!isReorderMode || isDeleteMode || !draggedStepId || draggedStepId === step.id) {
                   return;
                 }
 
                 event.preventDefault();
               }}
               onDrop={() => {
-                if (!isReorderMode || !draggedStepId) {
+                if (!isReorderMode || isDeleteMode || !draggedStepId) {
                   return;
                 }
 
@@ -145,12 +259,23 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
               }}
               onDragEnd={() => setDraggedStepId(null)}
             >
-              <div>
+              <div className="client-journey-modal__step-main">
+                {isDeleteMode ? (
+                  <label className="client-journey-modal__step-selector">
+                    <input type="checkbox" checked={selectedStepIds.includes(step.id)} onChange={() => toggleStepSelection(step.id)} />
+                    <span>Selecionar</span>
+                  </label>
+                ) : null}
                 <strong>{step.label}</strong>
                 <p>{step.doneAt ? `Marcado em ${new Date(step.doneAt).toLocaleDateString('pt-BR')}` : 'Ainda nao concluida'}</p>
               </div>
 
-              <button type="button" className={`btn ${step.done ? 'btn--secondary' : 'btn--primary'}`} onClick={() => toggleStep(step.id)}>
+              <button
+                type="button"
+                className={`btn ${step.done ? 'btn--secondary' : 'btn--primary'}`}
+                onClick={() => toggleStep(step.id)}
+                disabled={isDeleteMode}
+              >
                 {step.done ? 'Desfazer' : 'OK'}
               </button>
             </div>
