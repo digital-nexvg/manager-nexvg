@@ -29,6 +29,7 @@ export type BackupClient = {
       label: string;
       done?: boolean;
       doneAt?: string;
+      dueDate?: string;
     }>;
   };
 };
@@ -78,6 +79,7 @@ export async function importClientsFromBackup(payload: { clients: BackupClient[]
           label: step.label,
           done: Boolean(step.done),
           doneAt: step.doneAt ? new Date(step.doneAt) : null,
+          dueAt: step.dueDate ? new Date(step.dueDate) : null,
         })),
       });
     }

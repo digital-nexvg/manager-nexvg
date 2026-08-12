@@ -45,6 +45,7 @@ export function normalizeClientJourney(journey?: ClientJourney): ClientJourney {
         ...templateStep,
         done: Boolean(step.done),
         doneAt: step.doneAt,
+        dueDate: step.dueDate,
       };
     });
 
@@ -58,6 +59,7 @@ export function normalizeClientJourney(journey?: ClientJourney): ClientJourney {
         label: step.label.trim(),
         done: Boolean(step.done),
         doneAt: step.doneAt,
+        dueDate: step.dueDate,
       };
     });
 
@@ -65,6 +67,7 @@ export function normalizeClientJourney(journey?: ClientJourney): ClientJourney {
     ...step,
     done: false,
     doneAt: undefined,
+    dueDate: undefined,
   }));
 
   return {

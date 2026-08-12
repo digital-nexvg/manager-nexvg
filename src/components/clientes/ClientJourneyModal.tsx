@@ -18,6 +18,9 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
   const [draggedStepId, setDraggedStepId] = useState<string | null>(null);
   const [isAddingStep, setIsAddingStep] = useState(false);
   const [newStepLabel, setNewStepLabel] = useState('');
+  const [newStepDueDate, setNewStepDueDate] = useState('');
+  const [editingStepId, setEditingStepId] = useState<string | null>(null);
+  const [editingStepDueDate, setEditingStepDueDate] = useState('');
   const [isHiddenStepsModalOpen, setIsHiddenStepsModalOpen] = useState(false);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [selectedStepIds, setSelectedStepIds] = useState<string[]>([]);
@@ -35,11 +38,28 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
     setDraggedStepId(null);
     setIsAddingStep(false);
     setNewStepLabel('');
+    setNewStepDueDate('');
+    setEditingStepId(null);
+    setEditingStepDueDate('');
     setIsHiddenStepsModalOpen(false);
     setIsDeleteMode(false);
     setSelectedStepIds([]);
     setRemovedStepIds(normalizedJourney.removedStepIds ?? []);
   }, [client]);
+
+  const formatStepDate = (date?: string) => {
+    if (!date) {
+      return '';
+    }
+
+    const [year, month, day] = date.split('-').map(Number);
+
+    if (!year || !month || !day) {
+      return date;
+    }
+
+    return new Date(year, month - 1, day).toLocaleDateString('pt-BR');
+  };
 
   const nextStep = useMemo(() => getNextPendingJourneyStep(steps), [steps]);
   const pendingSteps = useMemo(() => steps.filter((step) => !step.done), [steps]);
@@ -148,6 +168,7 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
       id: `custom-${generateId()}`,
       label: trimmedLabel,
       done: false,
+      dueDate: newStepDueDate || undefined,
     };
 
     setSteps((current) => {
@@ -161,6 +182,40 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
     });
     setIsAddingStep(false);
     setNewStepLabel('');
+    setNewStepDueDate('');
+  };
+
+  const startEditingStep = (step: ClientJourneyStep) => {
+    setEditingStepId(step.id);
+    setEditingStepDueDate(step.dueDate ?? '');
+    setIsAddingStep(false);
+    setNewStepLabel('');
+    setNewStepDueDate('');
+  };
+
+  const handleCancelStepEdit = () => {
+    setEditingStepId(null);
+    setEditingStepDueDate('');
+  };
+
+  const handleSaveStepEdit = () => {
+    if (!editingStepId) {
+      return;
+    }
+
+    setSteps((current) =>
+      current.map((step) =>
+        step.id === editingStepId
+          ? {
+              ...step,
+              dueDate: editingStepDueDate || undefined,
+            }
+          : step,
+      ),
+    );
+
+    setEditingStepId(null);
+    setEditingStepDueDate('');
   };
 
   const handleEditClient = () => {
@@ -195,6 +250,9 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
                 onClick={() => {
                   setIsAddingStep((current) => !current);
                   setNewStepLabel('');
+                  setNewStepDueDate('');
+                  setEditingStepId(null);
+                  setEditingStepDueDate('');
                   setIsDeleteMode(false);
                   setSelectedStepIds([]);
                   setIsHiddenStepsModalOpen(false);
@@ -210,6 +268,8 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
                   setIsDeleteMode(false);
                   setSelectedStepIds([]);
                   setIsAddingStep(false);
+                  setEditingStepId(null);
+                  setEditingStepDueDate('');
                 }}
               >
                 Ocultados ({completedSteps.length})
@@ -233,6 +293,7 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
                 }}
                 placeholder="Nome da nova etapa"
               />
+              <input type="date" value={newStepDueDate} onChange={(event) => setNewStepDueDate(event.target.value)} aria-label="Prazo da etapa" />
               <button type="button" className="btn btn--primary" onClick={handleAddStep} disabled={!newStepLabel.trim()}>
                 Incluir
               </button>
@@ -271,14 +332,40 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
               }}
               onDragEnd={() => setDraggedStepId(null)}
             >
-              <div className="client-journey-modal__step-main">
-                <strong>{step.label}</strong>
-                <p>{step.doneAt ? `Marcado em ${new Date(step.doneAt).toLocaleDateString('pt-BR')}` : 'Ainda nao concluida'}</p>
-              </div>
+              {editingStepId === step.id ? (
+                <div className="client-journey-modal__step-main">
+                  <strong>{step.label}</strong>
+                  <div className="client-journey-modal__step-edit">
+                    <input
+                      type="date"
+                      value={editingStepDueDate}
+                      onChange={(event) => setEditingStepDueDate(event.target.value)}
+                      aria-label={`Prazo da tarefa ${step.label}`}
+                    />
+                    <button type="button" className="btn btn--primary btn--small" onClick={handleSaveStepEdit}>
+                      Salvar prazo
+                    </button>
+                    <button type="button" className="btn btn--ghost btn--small" onClick={handleCancelStepEdit}>
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="client-journey-modal__step-main">
+                  <strong>{step.label}</strong>
+                  <p>{step.doneAt ? `Marcado em ${new Date(step.doneAt).toLocaleDateString('pt-BR')}` : 'Ainda nao concluida'}</p>
+                  <p>{step.dueDate ? `Prazo: ${formatStepDate(step.dueDate)}` : 'Prazo nao definido'}</p>
+                </div>
+              )}
 
-              <button type="button" className="btn btn--primary" onClick={() => toggleStep(step.id)}>
-                OK
-              </button>
+              <div className="client-journey-modal__step-actions">
+                <button type="button" className="btn btn--ghost btn--small" onClick={() => startEditingStep(step)} disabled={isReorderMode}>
+                  Editar
+                </button>
+                <button type="button" className="btn btn--primary" onClick={() => toggleStep(step.id)}>
+                  OK
+                </button>
+              </div>
             </div>
           ))}
           {pendingSteps.length === 0 ? <p className="empty-state">Nao ha tarefas pendentes.</p> : null}
@@ -353,11 +440,38 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
                       ) : null}
                       <strong>{step.label}</strong>
                       <p>{step.doneAt ? `Marcado em ${new Date(step.doneAt).toLocaleDateString('pt-BR')}` : 'Concluida'}</p>
+                      <p>{step.dueDate ? `Prazo: ${formatStepDate(step.dueDate)}` : 'Prazo nao definido'}</p>
+                      {editingStepId === step.id ? (
+                        <div className="client-journey-modal__step-edit">
+                          <input
+                            type="date"
+                            value={editingStepDueDate}
+                            onChange={(event) => setEditingStepDueDate(event.target.value)}
+                            aria-label={`Prazo da tarefa ${step.label}`}
+                          />
+                          <button type="button" className="btn btn--primary btn--small" onClick={handleSaveStepEdit}>
+                            Salvar prazo
+                          </button>
+                          <button type="button" className="btn btn--ghost btn--small" onClick={handleCancelStepEdit}>
+                            Cancelar
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
 
-                    <button type="button" className="btn btn--secondary" onClick={() => toggleStep(step.id)} disabled={isDeleteMode}>
-                      Desfazer
-                    </button>
+                    <div className="client-journey-modal__step-actions">
+                      <button
+                        type="button"
+                        className="btn btn--ghost btn--small"
+                        onClick={() => startEditingStep(step)}
+                        disabled={isDeleteMode || isReorderMode}
+                      >
+                        Editar
+                      </button>
+                      <button type="button" className="btn btn--secondary" onClick={() => toggleStep(step.id)} disabled={isDeleteMode}>
+                        Desfazer
+                      </button>
+                    </div>
                   </div>
                 ))}
                 {completedSteps.length === 0 ? <p className="empty-state">Nao ha tarefas ocultadas.</p> : null}

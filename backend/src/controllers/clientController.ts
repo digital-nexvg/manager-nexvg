@@ -9,6 +9,7 @@ function createRemovedStepMarker(stepId: string) {
     label: `Removed ${stepId}`,
     done: true,
     doneAt: null,
+    dueAt: null,
   };
 }
 
@@ -21,6 +22,7 @@ function normalizeJourneyPayload(journey: any) {
     label: step.label,
     done: Boolean(step.done),
     doneAt: step.doneAt ? new Date(step.doneAt) : null,
+    dueAt: step.dueDate ? new Date(step.dueDate) : null,
   }));
 
   const removedMarkers = removedStepIds
@@ -45,6 +47,7 @@ function parseJourneyFromDb(client: any) {
       label: step.label,
       done: step.done,
       doneAt: step.doneAt?.toISOString(),
+      dueDate: step.dueAt ? step.dueAt.toISOString().slice(0, 10) : '',
     }));
 
   return {

@@ -6,6 +6,7 @@ export type ClientJourneyStep = {
   label: string;
   done: boolean;
   doneAt?: string;
+  dueDate?: string;
 };
 
 export type ClientJourney = {

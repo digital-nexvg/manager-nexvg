@@ -103,6 +103,7 @@ export async function createClient(client: Client): Promise<Client> {
         label: step.label,
         done: step.done,
         doneAt: step.doneAt ?? '',
+        dueDate: step.dueDate ?? '',
       })),
     },
   };
@@ -154,6 +155,7 @@ export async function updateClient(client: Client): Promise<Client> {
         label: step.label,
         done: step.done,
         doneAt: step.doneAt ?? '',
+        dueDate: step.dueDate ?? '',
       })),
     },
   };
