@@ -1,6 +1,59 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/prisma';
 
+const REMOVED_STEP_PREFIX = '__removed__';
+
+function createRemovedStepMarker(stepId: string) {
+  return {
+    stepId: `${REMOVED_STEP_PREFIX}${stepId}`,
+    label: `Removed ${stepId}`,
+    done: true,
+    doneAt: null,
+  };
+}
+
+function normalizeJourneyPayload(journey: any) {
+  const steps = Array.isArray(journey?.steps) ? journey.steps : [];
+  const removedStepIds = Array.isArray(journey?.removedStepIds) ? journey.removedStepIds : [];
+
+  const normalizedSteps = steps.map((step: any) => ({
+    stepId: step.id || step.stepId,
+    label: step.label,
+    done: Boolean(step.done),
+    doneAt: step.doneAt ? new Date(step.doneAt) : null,
+  }));
+
+  const removedMarkers = removedStepIds
+    .filter((stepId: unknown) => typeof stepId === 'string' && stepId.trim())
+    .map((stepId: string) => createRemovedStepMarker(stepId));
+
+  return {
+    notes: journey?.notes || '',
+    steps: [...normalizedSteps, ...removedMarkers],
+  };
+}
+
+function parseJourneyFromDb(client: any) {
+  const removedStepIds = client.journeySteps
+    .filter((step: any) => step.stepId.startsWith(REMOVED_STEP_PREFIX))
+    .map((step: any) => step.stepId.slice(REMOVED_STEP_PREFIX.length));
+
+  const steps = client.journeySteps
+    .filter((step: any) => !step.stepId.startsWith(REMOVED_STEP_PREFIX))
+    .map((step: any) => ({
+      id: step.stepId,
+      label: step.label,
+      done: step.done,
+      doneAt: step.doneAt?.toISOString(),
+    }));
+
+  return {
+    notes: client.journeyNotes?.notes || '',
+    removedStepIds,
+    steps,
+  };
+}
+
 export const clientController = {
   list: async (_req: Request, res: Response, next: NextFunction) => {
     try {
@@ -35,15 +88,7 @@ export const clientController = {
           paid: payment.paid,
           status: payment.status || (payment.paid ? 'paid' : 'pending'),
         })),
-        journey: {
-          notes: client.journeyNotes?.notes || '',
-          steps: client.journeySteps.map((step) => ({
-            id: step.stepId,
-            label: step.label,
-            done: step.done,
-            doneAt: step.doneAt?.toISOString(),
-          })),
-        },
+        journey: parseJourneyFromDb(client),
       }));
 
       return res.json(normalized);
@@ -55,6 +100,7 @@ export const clientController = {
   create: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { companyName, responsible, whatsapp, email, address, observations, segment, status, customStatus, payments = [], journey } = req.body;
+      const normalizedJourney = normalizeJourneyPayload(journey);
 
       const client = await prisma.client.create({
         data: {
@@ -79,20 +125,15 @@ export const clientController = {
               status: payment.status || (payment.paid ? 'paid' : 'pending'),
             })),
           },
-          journeyNotes: journey?.notes
+          journeyNotes: normalizedJourney.notes
             ? {
                 create: {
-                  notes: journey.notes,
+                  notes: normalizedJourney.notes,
                 },
               }
             : undefined,
           journeySteps: {
-            create: (journey?.steps || []).map((step: any) => ({
-              stepId: step.id || step.stepId,
-              label: step.label,
-              done: Boolean(step.done),
-              doneAt: step.doneAt ? new Date(step.doneAt) : null,
-            })),
+            create: normalizedJourney.steps,
           },
         },
       });
@@ -107,6 +148,7 @@ export const clientController = {
     try {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       const { companyName, responsible, whatsapp, email, address, observations, segment, status, customStatus, payments = [], journey } = req.body;
+      const normalizedJourney = normalizeJourneyPayload(journey);
 
       const client = await prisma.client.update({
         where: { id: id ?? '' },
@@ -135,18 +177,13 @@ export const clientController = {
           },
           journeyNotes: {
             upsert: {
-              create: { notes: journey?.notes || '' },
-              update: { notes: journey?.notes || '' },
+              create: { notes: normalizedJourney.notes },
+              update: { notes: normalizedJourney.notes },
             },
           },
           journeySteps: {
             deleteMany: {},
-            create: (journey?.steps || []).map((step: any) => ({
-              stepId: step.id || step.stepId,
-              label: step.label,
-              done: Boolean(step.done),
-              doneAt: step.doneAt ? new Date(step.doneAt) : null,
-            })),
+            create: normalizedJourney.steps,
           },
         },
       });
