@@ -1171,6 +1171,10 @@
   font-size: 0.82rem;
 }
 
+.client-journey-modal__step-selector--all {
+  font-weight: 600;
+}
+
 .client-journey-modal__step-selector input {
   accent-color: #f87171;
 }

@@ -42,6 +42,7 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
   const nextStep = useMemo(() => getNextPendingJourneyStep(steps), [steps]);
   const pendingSteps = useMemo(() => steps.filter((step) => !step.done), [steps]);
   const completedSteps = useMemo(() => steps.filter((step) => step.done), [steps]);
+  const areAllCompletedStepsSelected = completedSteps.length > 0 && completedSteps.every((step) => selectedStepIds.includes(step.id));
 
   if (!isOpen || !client) {
     return null;
@@ -89,6 +90,18 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
     setSelectedStepIds((current) =>
       current.includes(stepId) ? current.filter((currentStepId) => currentStepId !== stepId) : [...current, stepId],
     );
+  };
+
+  const toggleAllCompletedStepSelections = () => {
+    setSelectedStepIds((current) => {
+      if (completedSteps.every((step) => current.includes(step.id))) {
+        return current.filter((stepId) => !completedSteps.some((step) => step.id === stepId));
+      }
+
+      const selectedIds = new Set(current);
+      completedSteps.forEach((step) => selectedIds.add(step.id));
+      return [...selectedIds];
+    });
   };
 
   const handleDeleteSelectedSteps = () => {
@@ -299,14 +312,17 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
 
               {isDeleteMode ? (
                 <div className="client-journey-modal__delete-bar">
-                  <span>{selectedStepIds.length ? `${selectedStepIds.length} tarefa(s) selecionada(s)` : 'Selecione as tarefas para apagar'}</span>
+                  <label className="client-journey-modal__step-selector client-journey-modal__step-selector--all">
+                    <input type="checkbox" checked={areAllCompletedStepsSelected} onChange={toggleAllCompletedStepSelections} />
+                    <span>Selecionar todas</span>
+                  </label>
                   <button
                     type="button"
                     className="btn btn--secondary btn--small"
                     onClick={handleDeleteSelectedSteps}
                     disabled={!selectedStepIds.length}
                   >
-                    Apagar selecionadas
+                    {selectedStepIds.length ? `Apagar ${selectedStepIds.length}` : 'Apagar selecionadas'}
                   </button>
                 </div>
               ) : null}
