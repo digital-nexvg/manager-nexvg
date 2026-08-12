@@ -133,6 +133,7 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
         removedStepIds,
       },
     });
+    alert('Tarefas atualizadas com sucesso!');
     onClose();
   };
 

@@ -97,6 +97,7 @@ export async function createClient(client: Client): Promise<Client> {
     })),
     journey: {
       notes: normalized.journey?.notes ?? '',
+      removedStepIds: normalized.journey?.removedStepIds ?? [],
       steps: (normalized.journey?.steps ?? []).map((step) => ({
         id: step.id,
         label: step.label,
@@ -147,6 +148,7 @@ export async function updateClient(client: Client): Promise<Client> {
     })),
     journey: {
       notes: normalized.journey?.notes ?? '',
+      removedStepIds: normalized.journey?.removedStepIds ?? [],
       steps: (normalized.journey?.steps ?? []).map((step) => ({
         id: step.id,
         label: step.label,
