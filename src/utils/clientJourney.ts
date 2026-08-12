@@ -25,13 +25,18 @@ export function createDefaultClientJourneySteps(): ClientJourneyStep[] {
   }));
 }
 
+export function isTemplateJourneyStepId(stepId: string): boolean {
+  return CLIENT_JOURNEY_STEPS_TEMPLATE.some((step) => step.id === stepId);
+}
+
 export function normalizeClientJourney(journey?: ClientJourney): ClientJourney {
   const currentSteps = Array.isArray(journey?.steps) ? journey.steps : [];
   const templateById = new Map(CLIENT_JOURNEY_STEPS_TEMPLATE.map((step) => [step.id, step]));
+  const removedStepIds = new Set((journey?.removedStepIds ?? []).filter((stepId) => templateById.has(stepId)));
   const seenIds = new Set<string>();
 
   const normalizedCurrent = currentSteps
-    .filter((step) => templateById.has(step.id) && !seenIds.has(step.id))
+    .filter((step) => templateById.has(step.id) && !removedStepIds.has(step.id) && !seenIds.has(step.id))
     .map((step) => {
       seenIds.add(step.id);
       const templateStep = templateById.get(step.id)!;
@@ -56,7 +61,7 @@ export function normalizeClientJourney(journey?: ClientJourney): ClientJourney {
       };
     });
 
-  const missingTemplateSteps = CLIENT_JOURNEY_STEPS_TEMPLATE.filter((step) => !seenIds.has(step.id)).map((step) => ({
+  const missingTemplateSteps = CLIENT_JOURNEY_STEPS_TEMPLATE.filter((step) => !removedStepIds.has(step.id) && !seenIds.has(step.id)).map((step) => ({
     ...step,
     done: false,
     doneAt: undefined,
@@ -64,6 +69,7 @@ export function normalizeClientJourney(journey?: ClientJourney): ClientJourney {
 
   return {
     notes: journey?.notes ?? '',
+    removedStepIds: [...removedStepIds],
     steps: [...normalizedCurrent, ...customCurrentSteps, ...missingTemplateSteps],
   };
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Client, ClientJourneyStep } from '../../types';
-import { getNextPendingJourneyStep, normalizeClientJourney } from '../../utils/clientJourney';
+import { getNextPendingJourneyStep, isTemplateJourneyStepId, normalizeClientJourney } from '../../utils/clientJourney';
 import { generateId } from '../../utils/id';
 
 type ClientJourneyModalProps = {
@@ -21,6 +21,7 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
   const [isHiddenStepsModalOpen, setIsHiddenStepsModalOpen] = useState(false);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [selectedStepIds, setSelectedStepIds] = useState<string[]>([]);
+  const [removedStepIds, setRemovedStepIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!client) {
@@ -37,6 +38,7 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
     setIsHiddenStepsModalOpen(false);
     setIsDeleteMode(false);
     setSelectedStepIds([]);
+    setRemovedStepIds(normalizedJourney.removedStepIds ?? []);
   }, [client]);
 
   const nextStep = useMemo(() => getNextPendingJourneyStep(steps), [steps]);
@@ -109,6 +111,13 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
       return;
     }
 
+    setRemovedStepIds((current) => {
+      const next = new Set(current);
+
+      selectedStepIds.filter((stepId) => isTemplateJourneyStepId(stepId)).forEach((stepId) => next.add(stepId));
+
+      return [...next];
+    });
     setSteps((current) => current.filter((step) => !selectedStepIds.includes(step.id)));
     setSelectedStepIds([]);
     setIsDeleteMode(false);
@@ -121,6 +130,7 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
       journey: {
         steps,
         notes,
+        removedStepIds,
       },
     });
     onClose();

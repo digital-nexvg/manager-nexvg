@@ -11,6 +11,7 @@ export type ClientJourneyStep = {
 export type ClientJourney = {
   steps: ClientJourneyStep[];
   notes: string;
+  removedStepIds?: string[];
 };
 
 export type Payment = {
