@@ -1218,6 +1218,55 @@
   gap: 8px;
 }
 
+.client-journey-modal__hidden-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.68);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 30;
+}
+
+.client-journey-modal__hidden-card {
+  width: min(680px, 100%);
+  max-height: min(80vh, 720px);
+  overflow: auto;
+  border-radius: 20px;
+  padding: 20px;
+  background: linear-gradient(180deg, #0f172a, #111c2d);
+  border: 1px solid rgba(79, 140, 255, 0.24);
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.45);
+}
+
+.client-journey-modal__hidden-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.client-journey-modal__hidden-header h4 {
+  margin: 0;
+  color: var(--text-strong);
+}
+
+.client-journey-modal__hidden-header p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+}
+
+.client-journey-modal__hidden-actions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.client-journey-modal__steps--hidden {
+  margin-top: 14px;
+}
+
 .empty-state {
   color: var(--text-muted);
   margin: 0;
