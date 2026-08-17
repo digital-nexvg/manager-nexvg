@@ -13,6 +13,12 @@ import {
   type LeadStage,
 } from '../types';
 
+type LeadsPageProps = {
+  notificationCount?: number;
+  isMobile?: boolean;
+  onAcknowledgeLead?: (leadId: string) => void;
+};
+
 const emptyLeadForm = (): LeadFormData => ({
   name: '',
   whatsapp: '',
@@ -38,7 +44,7 @@ function formatLeadCount(count: number): string {
   return `🔔 ${count} novos Leads`;
 }
 
-export function LeadsPage({ notificationCount = 0 }: { notificationCount?: number }) {
+export function LeadsPage({ notificationCount = 0, isMobile = false, onAcknowledgeLead }: LeadsPageProps) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [search, setSearch] = useState('');
   const [stageFilter, setStageFilter] = useState<'all' | LeadStage>('all');
@@ -133,6 +139,14 @@ export function LeadsPage({ notificationCount = 0 }: { notificationCount?: numbe
       stage: lead.stage,
     });
     setShowForm(true);
+  };
+
+  const handleLeadNameClick = (lead: Lead) => {
+    if (onAcknowledgeLead) {
+      onAcknowledgeLead(lead.id);
+    }
+
+    handleOpenEdit(lead);
   };
 
   const handleChange = (field: keyof LeadFormData, value: string) => {
@@ -354,6 +368,52 @@ export function LeadsPage({ notificationCount = 0 }: { notificationCount?: numbe
         <h2>Leads cadastrados</h2>
 
         {filteredLeads.length ? (
+          isMobile ? (
+            <div className="leads-page__mobile-list">
+              {filteredLeads.map((lead) => (
+                <article key={lead.id} className="leads-page__mobile-card">
+                  <div className="leads-page__mobile-card-head">
+                    <button type="button" className="leads-page__mobile-name" onClick={() => handleLeadNameClick(lead)}>
+                      {lead.name}
+                    </button>
+                    {lead.convertedClientId ? <span className="leads-page__converted-tag">Convertido</span> : null}
+                  </div>
+
+                  <div className="leads-page__mobile-meta">
+                    <span>
+                      <strong>WhatsApp:</strong> {lead.whatsapp}
+                    </span>
+                    <span>
+                      <strong>Cidade:</strong> {lead.city || '—'}
+                    </span>
+                    <span>
+                      <strong>Segmento:</strong> {lead.segment || '—'}
+                    </span>
+                    <span>
+                      <strong>Origem:</strong> {lead.origin}
+                    </span>
+                    <span>
+                      <strong>Estágio:</strong> {formatLeadStatus(lead)}
+                    </span>
+                  </div>
+
+                  <div className="leads-page__mobile-actions">
+                    <button type="button" className="btn btn--ghost" onClick={() => handleOpenEdit(lead)}>
+                      Editar
+                    </button>
+                    {lead.stage === 'Ganho' && !lead.convertedClientId ? (
+                      <button type="button" className="btn btn--primary" onClick={() => setLeadToConvert(lead)}>
+                        Tornar cliente
+                      </button>
+                    ) : null}
+                    <button type="button" className="btn btn--danger" onClick={() => setLeadToDelete(lead)}>
+                      Excluir
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
           <div className="client-table-wrapper">
             <table className="client-table leads-table">
               <thead>
@@ -371,7 +431,9 @@ export function LeadsPage({ notificationCount = 0 }: { notificationCount?: numbe
                 {filteredLeads.map((lead) => (
                   <tr key={lead.id}>
                     <td>
-                      <strong>{lead.name}</strong>
+                      <button type="button" className="leads-page__name-trigger" onClick={() => handleLeadNameClick(lead)}>
+                        {lead.name}
+                      </button>
                       {lead.convertedClientId ? <div className="leads-page__converted-tag">Convertido em cliente</div> : null}
                     </td>
                     <td>{lead.whatsapp}</td>
@@ -407,6 +469,7 @@ export function LeadsPage({ notificationCount = 0 }: { notificationCount?: numbe
               </tbody>
             </table>
           </div>
+          )
         ) : (
           <p className="empty-state">Nenhum lead encontrado.</p>
         )}

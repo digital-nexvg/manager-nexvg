@@ -146,6 +146,48 @@
   line-height: 1;
 }
 
+.app-shell__mobile-menu-fab {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 80;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 999px;
+  background: rgba(8, 19, 35, 0.95);
+  color: var(--text-strong);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.app-shell__mobile-menu-fab-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.app-shell__mobile-menu-fab-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px rgba(8, 19, 35, 0.95);
+}
+
 .mobile-nav {
   display: flex;
   flex-direction: column;
@@ -217,6 +259,10 @@
   .dashboard-header__menu-button,
   .mobile-nav {
     display: flex;
+  }
+
+  .app-shell__mobile-menu-fab {
+    display: inline-flex;
   }
 
   .dashboard-header__brand-main {
@@ -300,6 +346,64 @@
     align-items: flex-start;
   }
 
+  .leads-page__table-card h2 {
+    margin-bottom: 4px;
+  }
+
+  .leads-page__mobile-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .leads-page__mobile-card {
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .leads-page__mobile-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .leads-page__mobile-name {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--text-strong);
+    font-size: 1rem;
+    font-weight: 800;
+    text-align: left;
+  }
+
+  .leads-page__mobile-meta {
+    display: grid;
+    gap: 6px;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+  }
+
+  .leads-page__mobile-meta strong {
+    color: var(--text-strong);
+  }
+
+  .leads-page__mobile-actions {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .leads-page__mobile-actions .btn {
+    width: 100%;
+  }
+
   .dashboard-month-nav {
     gap: 6px;
   }
@@ -325,6 +429,10 @@
   .client-form__grid,
   .leads-page__form-grid,
   .payment-form__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .leads-page__mobile-actions {
     grid-template-columns: 1fr;
   }
 }
@@ -460,6 +568,16 @@
   color: #8fefff;
   font-size: 0.8rem;
   font-weight: 700;
+}
+
+.leads-page__name-trigger {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text-strong);
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
 }
 
 .payments-page {

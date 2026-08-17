@@ -7,8 +7,10 @@ import { PagamentosPage } from './pages/PagamentosPage';
 import { TarefasPage } from './pages/TarefasPage';
 import { LoginPage } from './pages/LoginPage';
 import { getLeads } from './services/leadService';
+import { readStorage, writeStorage } from './services/storage';
 
 type SectionKey = 'dashboard' | 'clientes' | 'leads' | 'financeiro' | 'tarefas';
+const LEAD_ACK_STORAGE_KEY = 'nexvg-leads-acknowledged';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -44,7 +46,13 @@ function App() {
   const [activeSection, setActiveSection] = useState<SectionKey>('dashboard');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [leadNotificationCount, setLeadNotificationCount] = useState(0);
-  const [leadBaselineAt, setLeadBaselineAt] = useState<string | null>(null);
+  const [acknowledgedLeadIds, setAcknowledgedLeadIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') {
+      return [];
+    }
+
+    return readStorage<string[]>(LEAD_ACK_STORAGE_KEY, []);
+  });
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -85,18 +93,7 @@ function App() {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      setLeadBaselineAt(new Date().toISOString());
-      setLeadNotificationCount(0);
-      return;
-    }
-
-    setLeadBaselineAt(null);
-    setLeadNotificationCount(0);
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    if (!isAuthenticated || !leadBaselineAt) {
+    if (!isAuthenticated) {
       return;
     }
 
@@ -104,10 +101,13 @@ function App() {
 
     const refreshLeadNotifications = async () => {
       const leads = await getLeads();
-      const count = leads.filter((lead) => lead.origin === 'Formulário' && new Date(lead.createdAt).getTime() > new Date(leadBaselineAt).getTime()).length;
+      const unreadLeads = leads.filter(
+       (lead) => lead.origin === 'Formulário' && !acknowledgedLeadIds.includes(lead.id),
+      );
+      const count = unreadLeads.length;
 
       if (isMounted) {
-        setLeadNotificationCount(count);
+       setLeadNotificationCount(count);
       }
     };
 
@@ -118,7 +118,15 @@ function App() {
       isMounted = false;
       window.clearInterval(timer);
     };
-  }, [isAuthenticated, leadBaselineAt]);
+  }, [acknowledgedLeadIds, isAuthenticated]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    writeStorage(LEAD_ACK_STORAGE_KEY, acknowledgedLeadIds);
+  }, [acknowledgedLeadIds]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -162,6 +170,10 @@ function App() {
     setIsMenuOpen(false);
   };
 
+  const handleAcknowledgeLead = (leadId: string) => {
+    setAcknowledgedLeadIds((current) => (current.includes(leadId) ? current : [...current, leadId]));
+  };
+
   if (!isAuthenticated || route === '/login') {
     return <LoginPage onLogin={handleLogin} onForgotPassword={handleForgotPassword} />;
   }
@@ -191,11 +203,22 @@ function App() {
 
   return (
     <main className="app-shell">
+      {isAuthenticated && isMobile ? (
+        <button
+          type="button"
+          className="app-shell__mobile-menu-fab"
+          onClick={() => setIsMenuOpen((current) => !current)}
+          aria-label="Abrir menu"
+        >
+          <span className="app-shell__mobile-menu-fab-icon">☰</span>
+          {leadNotificationCount > 0 ? <span className="app-shell__mobile-menu-fab-badge">{leadNotificationCount}</span> : null}
+        </button>
+      ) : null}
       {isMobile ? (
         <>
           {activeSection === 'dashboard' ? (
             <DashboardOverview
-              onToggleMenu={() => setIsMenuOpen((current) => !current)}
+              onToggleMenu={undefined}
               isMobile={isMobile}
               mobileMenu={mobileMenu}
             />
@@ -219,7 +242,7 @@ function App() {
                   Voltar para o início
                 </button>
               </div>
-              <LeadsPage notificationCount={leadNotificationCount} />
+              <LeadsPage notificationCount={leadNotificationCount} isMobile={isMobile} onAcknowledgeLead={handleAcknowledgeLead} />
             </>
           ) : null}
           {activeSection === 'financeiro' ? (
@@ -249,7 +272,7 @@ function App() {
         <>
           <DashboardOverview />
           <ClientesPage />
-          <LeadsPage notificationCount={leadNotificationCount} />
+          <LeadsPage notificationCount={leadNotificationCount} isMobile={isMobile} onAcknowledgeLead={handleAcknowledgeLead} />
           <PagamentosPage />
           <TarefasPage />
         </>
