@@ -84,3 +84,41 @@ export type DashboardSection = {
   title: string;
   metrics: DashboardMetric[];
 };
+
+export const leadStageOptions = [
+  'Novo',
+  'Interessado',
+  'Diagnóstico',
+  'Orçamento',
+  'Aguardando retorno',
+  'Possível fechamento',
+  'Ganho',
+  'Perdido',
+] as const;
+
+export const leadOriginOptions = ['Formulário', 'Manual'] as const;
+
+export type LeadStage = (typeof leadStageOptions)[number];
+export type LeadOrigin = (typeof leadOriginOptions)[number];
+
+export type Lead = {
+  id: string;
+  name: string;
+  whatsapp: string;
+  city: string;
+  segment: string;
+  origin: LeadOrigin;
+  stage: LeadStage;
+  convertedAt?: string | null;
+  convertedClientId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type LeadFormData = Pick<Lead, 'name' | 'whatsapp' | 'city' | 'segment' | 'origin' | 'stage'>;
+
+export type LeadConversionResult = {
+  alreadyConverted: boolean;
+  clientId: string;
+  lead: Lead;
+};

@@ -31,3 +31,9 @@ Este diretório contém a estrutura inicial do backend do projeto com:
 - POST /api/auth/login
 - POST /api/auth/admin
 - GET /api/auth/validate
+- GET /api/leads
+- POST /api/leads
+- POST /api/leads/public
+- PUT /api/leads/:id
+- DELETE /api/leads/:id
+- POST /api/leads/:id/convert

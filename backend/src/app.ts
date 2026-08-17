@@ -5,13 +5,22 @@ import routes from './routes';
 import { errorMiddleware } from './middlewares/errorMiddleware';
 
 const app = express();
+const privateCors = cors({
+  origin: env.corsOrigin.split(','),
+  credentials: true,
+});
+const publicCors = cors({
+  origin: true,
+  credentials: false,
+});
 
-app.use(
-  cors({
-    origin: env.corsOrigin.split(','),
-    credentials: true,
-  })
-);
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/leads/public')) {
+    return publicCors(req, res, next);
+  }
+
+  return privateCors(req, res, next);
+});
 
 app.use(express.json());
 

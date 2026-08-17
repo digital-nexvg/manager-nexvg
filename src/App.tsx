@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import './App.css';
 import { DashboardOverview } from './components/dashboard/DashboardOverview';
 import { ClientesPage } from './pages/ClientesPage';
+import { LeadsPage } from './pages/LeadsPage';
 import { PagamentosPage } from './pages/PagamentosPage';
 import { TarefasPage } from './pages/TarefasPage';
 import { LoginPage } from './pages/LoginPage';
+import { getLeads } from './services/leadService';
 
-type SectionKey = 'dashboard' | 'clientes' | 'financeiro' | 'tarefas';
+type SectionKey = 'dashboard' | 'clientes' | 'leads' | 'financeiro' | 'tarefas';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -41,6 +43,8 @@ function App() {
   });
   const [activeSection, setActiveSection] = useState<SectionKey>('dashboard');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [leadNotificationCount, setLeadNotificationCount] = useState(0);
+  const [leadBaselineAt, setLeadBaselineAt] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -79,6 +83,42 @@ function App() {
       window.removeEventListener('resize', handleResize);
     };
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      setLeadBaselineAt(new Date().toISOString());
+      setLeadNotificationCount(0);
+      return;
+    }
+
+    setLeadBaselineAt(null);
+    setLeadNotificationCount(0);
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !leadBaselineAt) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const refreshLeadNotifications = async () => {
+      const leads = await getLeads();
+      const count = leads.filter((lead) => lead.origin === 'Formulário' && new Date(lead.createdAt).getTime() > new Date(leadBaselineAt).getTime()).length;
+
+      if (isMounted) {
+        setLeadNotificationCount(count);
+      }
+    };
+
+    refreshLeadNotifications();
+    const timer = window.setInterval(refreshLeadNotifications, 30000);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(timer);
+    };
+  }, [isAuthenticated, leadBaselineAt]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -134,6 +174,9 @@ function App() {
       <button type="button" className={`mobile-nav__button ${activeSection === 'clientes' ? 'is-active' : ''}`} onClick={() => handleSectionChange('clientes')}>
         Clientes
       </button>
+      <button type="button" className={`mobile-nav__button ${activeSection === 'leads' ? 'is-active' : ''}`} onClick={() => handleSectionChange('leads')}>
+        Leads {leadNotificationCount > 0 ? `(${leadNotificationCount})` : ''}
+      </button>
       <button type="button" className={`mobile-nav__button ${activeSection === 'financeiro' ? 'is-active' : ''}`} onClick={() => handleSectionChange('financeiro')}>
         Financeiro
       </button>
@@ -168,6 +211,17 @@ function App() {
               <ClientesPage />
             </>
           ) : null}
+          {activeSection === 'leads' ? (
+            <>
+              {mobileMenu}
+              <div className="mobile-nav__back-wrap">
+                <button type="button" className="btn btn--secondary" onClick={() => handleSectionChange('dashboard')}>
+                  Voltar para o início
+                </button>
+              </div>
+              <LeadsPage notificationCount={leadNotificationCount} />
+            </>
+          ) : null}
           {activeSection === 'financeiro' ? (
             <>
               {mobileMenu}
@@ -195,6 +249,7 @@ function App() {
         <>
           <DashboardOverview />
           <ClientesPage />
+          <LeadsPage notificationCount={leadNotificationCount} />
           <PagamentosPage />
           <TarefasPage />
         </>

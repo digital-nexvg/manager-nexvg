@@ -40,6 +40,24 @@ model Client {
   @@map("clients")
 }
 
+model Lead {
+  id                 String   @id @default(cuid())
+  name               String
+  whatsapp           String   @unique
+  city               String?
+  segment            String?
+  origin             String   @default("Formulário")
+  stage              String   @default("Novo")
+  convertedAt        DateTime?
+  convertedClientId   String?  @unique
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([origin])
+  @@index([stage])
+  @@map("leads")
+}
+
 model Payment {
   id            String    @id @default(cuid())
   externalId    String?   @unique
