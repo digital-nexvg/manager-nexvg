@@ -50,6 +50,7 @@ export function LeadsPage({ notificationCount = 0, isMobile = false, onAcknowled
   const [stageFilter, setStageFilter] = useState<'all' | LeadStage>('all');
   const [originFilter, setOriginFilter] = useState<'all' | LeadOrigin>('all');
   const [segmentFilter, setSegmentFilter] = useState('all');
+  const [isFiltersOpen, setIsFiltersOpen] = useState(() => !isMobile);
   const [showForm, setShowForm] = useState(false);
   const [editingLeadId, setEditingLeadId] = useState<string | null>(null);
   const [formData, setFormData] = useState<LeadFormData>(emptyLeadForm());
@@ -69,6 +70,10 @@ export function LeadsPage({ notificationCount = 0, isMobile = false, onAcknowled
       window.removeEventListener('nexvg-storage-update', refreshLeads);
     };
   }, []);
+
+  useEffect(() => {
+    setIsFiltersOpen(!isMobile);
+  }, [isMobile]);
 
   const segments = useMemo(
     () =>
@@ -320,49 +325,62 @@ export function LeadsPage({ notificationCount = 0, isMobile = false, onAcknowled
         </div>
       ) : null}
 
-      <div className="leads-page__filters">
+      <div className="leads-page__filters-bar">
         <SearchInput
           value={search}
           onChange={setSearch}
           placeholder="Buscar por nome, empresa ou WhatsApp"
         />
 
-        <label className="tasks-page__filter-control">
-          <span className="search-input__label">Estágio</span>
-          <select value={stageFilter} onChange={(event) => setStageFilter(event.target.value as 'all' | LeadStage)}>
-            <option value="all">Todos</option>
-            {leadStageOptions.map((stage) => (
-              <option key={stage} value={stage}>
-                {stage}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="tasks-page__filter-control">
-          <span className="search-input__label">Origem</span>
-          <select value={originFilter} onChange={(event) => setOriginFilter(event.target.value as 'all' | LeadOrigin)}>
-            <option value="all">Todas</option>
-            {leadOriginOptions.map((origin) => (
-              <option key={origin} value={origin}>
-                {origin}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="tasks-page__filter-control">
-          <span className="search-input__label">Segmento</span>
-          <select value={segmentFilter} onChange={(event) => setSegmentFilter(event.target.value)}>
-            <option value="all">Todos</option>
-            {segments.map((segment) => (
-              <option key={segment} value={segment}>
-                {segment}
-              </option>
-            ))}
-          </select>
-        </label>
+        <button type="button" className="leads-page__filter-toggle btn btn--secondary" onClick={() => setIsFiltersOpen((current) => !current)}>
+          <span className="leads-page__filter-toggle-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+              <path d="M4 6h16M7 12h10M10 18h4" />
+            </svg>
+          </span>
+          Filtros
+        </button>
       </div>
+
+      {isFiltersOpen ? (
+        <div className="leads-page__filters-panel">
+          <label className="tasks-page__filter-control">
+            <span className="search-input__label">Estágio</span>
+            <select value={stageFilter} onChange={(event) => setStageFilter(event.target.value as 'all' | LeadStage)}>
+              <option value="all">Todos</option>
+              {leadStageOptions.map((stage) => (
+                <option key={stage} value={stage}>
+                  {stage}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="tasks-page__filter-control">
+            <span className="search-input__label">Origem</span>
+            <select value={originFilter} onChange={(event) => setOriginFilter(event.target.value as 'all' | LeadOrigin)}>
+              <option value="all">Todas</option>
+              {leadOriginOptions.map((origin) => (
+                <option key={origin} value={origin}>
+                  {origin}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="tasks-page__filter-control">
+            <span className="search-input__label">Segmento</span>
+            <select value={segmentFilter} onChange={(event) => setSegmentFilter(event.target.value)}>
+              <option value="all">Todos</option>
+              {segments.map((segment) => (
+                <option key={segment} value={segment}>
+                  {segment}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      ) : null}
 
       <div className="leads-page__table-card">
         <h2>Leads cadastrados</h2>

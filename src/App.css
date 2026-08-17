@@ -328,7 +328,8 @@
   .leads-page__header,
   .payments-page__header,
   .clients-page__actions,
-  .leads-page__filters,
+  .leads-page__filters-bar,
+  .leads-page__filters-panel,
   .payments-page__form-top,
   .payments-page__tabs {
     flex-direction: column;
@@ -344,6 +345,11 @@
   .payments-page__hero {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .leads-page__filter-toggle {
+    width: 100%;
+    justify-content: center;
   }
 
   .leads-page__table-card h2 {
@@ -470,11 +476,46 @@
 .leads-page__hero,
 .leads-page__form-head,
 .leads-page__form-actions,
-.leads-page__filters {
+.leads-page__filters-bar,
+.leads-page__filters-panel {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.leads-page__filters-bar {
+  justify-content: space-between;
+}
+
+.leads-page__filters-panel {
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.66);
+}
+
+.leads-page__filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.leads-page__filter-toggle-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+}
+
+.leads-page__filter-toggle-icon svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .leads-page__header {
