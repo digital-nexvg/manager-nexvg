@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Client, ClientJourneyStep } from '../../types';
-import { getNextPendingJourneyStep, isTemplateJourneyStepId, normalizeClientJourney } from '../../utils/clientJourney';
+import { getNextPendingJourneyStep, isCanceledJourneyStepId, isTemplateJourneyStepId, normalizeClientJourney } from '../../utils/clientJourney';
 import { generateId } from '../../utils/id';
 
 type ClientJourneyModalProps = {
@@ -62,8 +62,9 @@ export function ClientJourneyModal({ isOpen, client, onClose, onSave, onEditClie
   };
 
   const nextStep = useMemo(() => getNextPendingJourneyStep(steps), [steps]);
-  const pendingSteps = useMemo(() => steps.filter((step) => !step.done), [steps]);
-  const completedSteps = useMemo(() => steps.filter((step) => step.done), [steps]);
+  const visibleSteps = useMemo(() => steps.filter((step) => !isCanceledJourneyStepId(step.id)), [steps]);
+  const pendingSteps = useMemo(() => visibleSteps.filter((step) => !step.done), [visibleSteps]);
+  const completedSteps = useMemo(() => visibleSteps.filter((step) => step.done), [visibleSteps]);
   const areAllCompletedStepsSelected = completedSteps.length > 0 && completedSteps.every((step) => selectedStepIds.includes(step.id));
 
   if (!isOpen || !client) {

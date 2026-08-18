@@ -29,6 +29,10 @@ export function isTemplateJourneyStepId(stepId: string): boolean {
   return CLIENT_JOURNEY_STEPS_TEMPLATE.some((step) => step.id === stepId);
 }
 
+export function isCanceledJourneyStepId(stepId: string): boolean {
+  return stepId === CANCELED_STEP_ID;
+}
+
 export function normalizeClientJourney(journey?: ClientJourney): ClientJourney {
   const currentSteps = Array.isArray(journey?.steps) ? journey.steps : [];
   const templateById = new Map(CLIENT_JOURNEY_STEPS_TEMPLATE.map((step) => [step.id, step]));

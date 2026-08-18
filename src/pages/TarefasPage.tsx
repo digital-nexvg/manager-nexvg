@@ -3,7 +3,7 @@ import { SearchInput } from '../components/common/SearchInput';
 import { getClients, updateClient } from '../services/clientService';
 import type { Client, ClientJourneyStep } from '../types';
 import { formatDate, parseDateOnly } from '../utils/formatters';
-import { isTemplateJourneyStepId, normalizeClientJourney } from '../utils/clientJourney';
+import { isCanceledJourneyStepId, isTemplateJourneyStepId, normalizeClientJourney } from '../utils/clientJourney';
 
 type TaskStatusFilter = 'all' | 'pending' | 'overdue' | 'no-due-date';
 type TaskStatus = 'pending' | 'overdue' | 'completed' | 'no-due-date';
@@ -132,7 +132,7 @@ export function TarefasPage() {
       .flatMap((client) => {
         const journey = normalizeClientJourney(client.journey);
 
-        return journey.steps.map((step) => ({
+        return journey.steps.filter((step) => !isCanceledJourneyStepId(step.id)).map((step) => ({
           id: `${client.id}:${step.id}`,
           clientId: client.id,
           stepId: step.id,
