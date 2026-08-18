@@ -58,16 +58,25 @@ export function LeadsPage({ notificationCount = 0, isMobile = false, onAcknowled
   const [leadToConvert, setLeadToConvert] = useState<Lead | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     const refreshLeads = async () => {
       const nextLeads = await getLeads();
-      setLeads(nextLeads);
+      if (isMounted) {
+        setLeads(nextLeads);
+      }
     };
 
     refreshLeads();
+    const timer = window.setInterval(refreshLeads, 30000);
     window.addEventListener('nexvg-storage-update', refreshLeads);
+    window.addEventListener('focus', refreshLeads);
 
     return () => {
+      isMounted = false;
+      window.clearInterval(timer);
       window.removeEventListener('nexvg-storage-update', refreshLeads);
+      window.removeEventListener('focus', refreshLeads);
     };
   }, []);
 
