@@ -113,7 +113,7 @@ async function upsertLeadByWhatsapp(payload: LeadPayload, origin: LeadOrigin, st
 export const leadService = {
   list: async () => {
     const leads = await prisma.lead.findMany({
-      orderBy: { createdAt: 'desc' },
+      orderBy: { updatedAt: 'desc' },
     });
 
     return leads.map(serializeLead);
