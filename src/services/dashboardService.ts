@@ -35,6 +35,14 @@ function isMonthlyPayment(payment: Payment): boolean {
   return payment.description === 'Mensalidade';
 }
 
+function isResourcePayment(payment: Payment): boolean {
+  return payment.description.startsWith('Adicionar Recurso');
+}
+
+function isStructurePayment(payment: Payment): boolean {
+  return !isMonthlyPayment(payment) && !isResourcePayment(payment);
+}
+
 function isPaymentInDueMonth(payment: Payment, monthKey: string): boolean {
   const dueDate = parseDateOnly(payment.dueDate);
   const paymentMonth = getMonthKey(dueDate);
@@ -63,7 +71,7 @@ function buildStructureGroups(payments: Array<Payment & { clientName: string }>)
   const groups = new Map<string, StructureGroup>();
 
   for (const payment of payments) {
-    if (isMonthlyPayment(payment)) {
+    if (!isStructurePayment(payment)) {
       continue;
     }
 
@@ -94,7 +102,7 @@ function buildMonthMetrics(payments: Array<Payment & { clientName: string }>, mo
   const monthKey = getMonthKey(monthDate);
   const billingMonthPayments = payments.filter((payment) => isPaymentInDueMonth(payment, monthKey));
   const contractedStructurePayments = payments.filter(
-    (payment) => !isMonthlyPayment(payment) && isPaymentInCreatedMonth(payment, monthKey),
+    (payment) => isStructurePayment(payment) && isPaymentInCreatedMonth(payment, monthKey),
   );
   const paidMonthPayments = payments.filter((payment) => payment.paid && isPaymentInReceivedMonth(payment, monthKey));
   const pendingMonthPayments = payments.filter((payment) => !payment.paid && isPaymentInDueMonth(payment, monthKey));
@@ -107,8 +115,11 @@ function buildMonthMetrics(payments: Array<Payment & { clientName: string }>, mo
   const monthlyBillingValue = billingMonthPayments
     .filter((payment) => isMonthlyPayment(payment))
     .reduce((sum, payment) => sum + payment.value, 0);
+  const resourceBillingValue = billingMonthPayments
+    .filter((payment) => isResourcePayment(payment))
+    .reduce((sum, payment) => sum + payment.value, 0);
   const structureBillingValue = billingMonthPayments
-    .filter((payment) => !isMonthlyPayment(payment))
+    .filter((payment) => isStructurePayment(payment))
     .reduce((sum, payment) => sum + payment.value, 0);
   const contractedRevenueValue = contractedStructurePayments.reduce((sum, payment) => sum + payment.value, 0);
   const structureGroups = buildStructureGroups(payments);
@@ -138,7 +149,7 @@ function buildMonthMetrics(payments: Array<Payment & { clientName: string }>, mo
     {
       title: 'Faturamento',
       value: formatCurrency(billingValue),
-      subtitle: `Mensalidades: ${formatCurrency(monthlyBillingValue)} • Estruturas: ${formatCurrency(structureBillingValue)}\nFaturamento líquido: ${formatCurrency(netBillingValue)}`,
+      subtitle: `Mensalidades: ${formatCurrency(monthlyBillingValue)} • Estruturas: ${formatCurrency(structureBillingValue)} • Recursos: ${formatCurrency(resourceBillingValue)}\nFaturamento líquido: ${formatCurrency(netBillingValue)}`,
       tone: 'positive',
       icon: '↗',
       details: buildPaymentDetails(billingMonthPayments),

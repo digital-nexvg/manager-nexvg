@@ -87,7 +87,7 @@ const resolveMonthlyPaymentValue = (payment: Payment, paymentDate: string): numb
 export function PagamentosPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  const [paymentMode, setPaymentMode] = useState<'structure' | 'monthly'>('structure');
+  const [paymentMode, setPaymentMode] = useState<'structure' | 'monthly' | 'resource'>('structure');
   const [isBillingOpen, setIsBillingOpen] = useState(false);
   const [isFinanceVisible, setIsFinanceVisible] = useState(false);
   const [structureValue, setStructureValue] = useState(0);
@@ -131,7 +131,7 @@ export function PagamentosPage() {
 
     const payments: Payment[] = scheduleDates.map((date, index) => ({
       id: generateId(),
-      description: `Cobrança da estrutura ${index + 1}`,
+      description: `${paymentMode === 'resource' ? 'Adicionar Recurso' : 'Cobrança da estrutura'} ${index + 1}`,
       value: Number(structureValue),
       dueDate: date,
       month: date.slice(0, 7),
@@ -276,6 +276,13 @@ export function PagamentosPage() {
                   >
                     Mensalidade
                   </button>
+                  <button
+                    type="button"
+                    className={`btn ${paymentMode === 'resource' ? 'btn--primary' : 'btn--secondary'}`}
+                    onClick={() => setPaymentMode('resource')}
+                  >
+                    Adicionar Recurso
+                  </button>
                 </div>
 
                 <button type="button" className="btn btn--ghost" onClick={() => setIsBillingOpen(false)}>
@@ -295,6 +302,38 @@ export function PagamentosPage() {
 
               {paymentMode === 'structure' ? (
                 <StructurePaymentForm
+                  clients={clients}
+                  selectedClientId={selectedClientId}
+                  installmentValue={structureValue}
+                  installmentsQuantity={installmentsQuantity}
+                  startDate={startDate}
+                  scheduleDates={scheduleDates}
+                  onSelectedClientIdChange={(clientId) => setSelectedClientId(clientId || null)}
+                  onInstallmentValueChange={(value) => setStructureValue(Number(value))}
+                  onInstallmentsQuantityChange={(value) => {
+                    const parsed = Number(value);
+                    setInstallmentsQuantity(parsed || 1);
+                    setScheduleDates(buildStructureSchedule(startDate, parsed || 1));
+                  }}
+                  onStartDateChange={(value) => {
+                    setStartDate(value);
+                    setScheduleDates(buildStructureSchedule(value, installmentsQuantity));
+                  }}
+                  onScheduleDateChange={(index, value) => {
+                    setScheduleDates((current) => {
+                      const next = [...current];
+                      next[index] = value;
+                      return next;
+                    });
+                  }}
+                  onGenerateSchedule={() => {
+                    setScheduleDates(buildStructureSchedule(startDate, installmentsQuantity));
+                  }}
+                  onSubmit={handleSubmitStructure}
+                />
+              ) : paymentMode === 'resource' ? (
+                <StructurePaymentForm
+                  mode="resource"
                   clients={clients}
                   selectedClientId={selectedClientId}
                   installmentValue={structureValue}

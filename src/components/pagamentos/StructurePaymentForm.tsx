@@ -1,6 +1,7 @@
 import type { Client } from '../../types';
 
 type StructurePaymentFormProps = {
+  mode?: 'structure' | 'resource';
   clients: Client[];
   selectedClientId: string | null;
   installmentValue: number;
@@ -17,6 +18,7 @@ type StructurePaymentFormProps = {
 };
 
 export function StructurePaymentForm({
+  mode = 'structure',
   clients,
   selectedClientId,
   installmentValue,
@@ -32,6 +34,7 @@ export function StructurePaymentForm({
   onSubmit,
 }: StructurePaymentFormProps) {
   const totalValue = installmentValue * installmentsQuantity;
+  const isResource = mode === 'resource';
 
   return (
     <form
@@ -41,7 +44,11 @@ export function StructurePaymentForm({
         onSubmit();
       }}
     >
-      <div className="structure-payment-form__table" role="table" aria-label="Cadastro de cobrança de estrutura">
+      <div
+        className="structure-payment-form__table"
+        role="table"
+        aria-label={isResource ? 'Cadastro de recurso' : 'Cadastro de cobrança de estrutura'}
+      >
         <div className="structure-payment-form__table-head" role="row">
           <span role="columnheader">Empresa</span>
           <span role="columnheader">Valor da parcela</span>
@@ -120,7 +127,7 @@ export function StructurePaymentForm({
 
       <div className="structure-payment-form__actions">
         <button type="submit" className="btn btn--primary">
-          Salvar cobrança da estrutura
+          {isResource ? 'Salvar recurso' : 'Salvar cobrança da estrutura'}
         </button>
       </div>
     </form>
