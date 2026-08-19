@@ -101,8 +101,8 @@ function buildMonthMetrics(payments: Array<Payment & { clientName: string }>, mo
   const STRUCTURE_PRODUCTION_COST = 40;
   const monthKey = getMonthKey(monthDate);
   const billingMonthPayments = payments.filter((payment) => isPaymentInDueMonth(payment, monthKey));
-  const contractedStructurePayments = payments.filter(
-    (payment) => isStructurePayment(payment) && isPaymentInCreatedMonth(payment, monthKey),
+  const contractedRevenuePayments = payments.filter(
+    (payment) => !isMonthlyPayment(payment) && isPaymentInCreatedMonth(payment, monthKey),
   );
   const paidMonthPayments = payments.filter((payment) => payment.paid && isPaymentInReceivedMonth(payment, monthKey));
   const pendingMonthPayments = payments.filter((payment) => !payment.paid && isPaymentInDueMonth(payment, monthKey));
@@ -121,13 +121,13 @@ function buildMonthMetrics(payments: Array<Payment & { clientName: string }>, mo
   const structureBillingValue = billingMonthPayments
     .filter((payment) => isStructurePayment(payment))
     .reduce((sum, payment) => sum + payment.value, 0);
-  const contractedRevenueValue = contractedStructurePayments.reduce((sum, payment) => sum + payment.value, 0);
+  const contractedRevenueValue = contractedRevenuePayments.reduce((sum, payment) => sum + payment.value, 0);
   const structureGroups = buildStructureGroups(payments);
   const structureGroupsEndingInMonth = structureGroups.filter(
     (group) => getMonthKey(parseDateOnly(group.latestDueDate)) === monthKey,
   );
   const contractedStructureCompanies = new Set(
-    contractedStructurePayments.map((payment) => payment.clientName.trim().toLowerCase()),
+    contractedRevenuePayments.map((payment) => payment.clientName.trim().toLowerCase()),
   );
   const productionCostValue = structureGroupsEndingInMonth.length * STRUCTURE_PRODUCTION_COST;
   const netBillingValue = billingValue - productionCostValue;
@@ -160,7 +160,7 @@ function buildMonthMetrics(payments: Array<Payment & { clientName: string }>, mo
       subtitle: `${contractedStructureCompanies.size} empresas com estrutura gerada no mês`,
       tone: 'warning',
       icon: '📄',
-      details: buildPaymentDetails(contractedStructurePayments),
+      details: buildPaymentDetails(contractedRevenuePayments),
     },
     {
       title: 'Custo de Produção',
