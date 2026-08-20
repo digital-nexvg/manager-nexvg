@@ -16,6 +16,7 @@ import {
 type LeadsPageProps = {
   notificationCount?: number;
   isMobile?: boolean;
+  isCollapsible?: boolean;
   onAcknowledgeLead?: (leadId: string) => void;
 };
 
@@ -44,7 +45,7 @@ function formatLeadCount(count: number): string {
   return `🔔 ${count} novos Leads`;
 }
 
-export function LeadsPage({ notificationCount = 0, isMobile = false, onAcknowledgeLead }: LeadsPageProps) {
+export function LeadsPage({ notificationCount = 0, isMobile = false, isCollapsible = false, onAcknowledgeLead }: LeadsPageProps) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [search, setSearch] = useState('');
   const [stageFilter, setStageFilter] = useState<'all' | LeadStage>('all');
@@ -57,6 +58,7 @@ export function LeadsPage({ notificationCount = 0, isMobile = false, onAcknowled
   const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
   const [leadToConvert, setLeadToConvert] = useState<Lead | null>(null);
   const [leadDetails, setLeadDetails] = useState<Lead | null>(null);
+  const [isContentOpen, setIsContentOpen] = useState(() => !isCollapsible);
 
   useEffect(() => {
     let isMounted = true;
@@ -84,6 +86,10 @@ export function LeadsPage({ notificationCount = 0, isMobile = false, onAcknowled
   useEffect(() => {
     setIsFiltersOpen(!isMobile);
   }, [isMobile]);
+
+  useEffect(() => {
+    setIsContentOpen(!isCollapsible);
+  }, [isCollapsible]);
 
   const segments = useMemo(
     () =>
@@ -238,11 +244,20 @@ export function LeadsPage({ notificationCount = 0, isMobile = false, onAcknowled
           <h1>Controle simples de leads</h1>
         </div>
 
-        <div className="leads-page__notification" aria-live="polite">
-          {notificationCount > 0 ? formatLeadCount(notificationCount) : 'Sem novos Leads agora'}
+        <div className="leads-page__header-actions">
+          <div className="leads-page__notification" aria-live="polite">
+            {notificationCount > 0 ? formatLeadCount(notificationCount) : 'Sem novos Leads agora'}
+          </div>
+          {isCollapsible ? (
+            <button type="button" className="btn btn--secondary" onClick={() => setIsContentOpen((current) => !current)}>
+              {isContentOpen ? 'Fechar leads' : 'Abrir leads'}
+            </button>
+          ) : null}
         </div>
       </div>
 
+      {isContentOpen ? (
+        <>
       <DashboardGrid>
         <DashboardCard title="Total de Leads" value={String(stats.total)} icon="•" tone="neutral" />
         <DashboardCard title="Novos" value={String(stats.novo)} icon="1" tone="neutral" />
@@ -567,6 +582,8 @@ export function LeadsPage({ notificationCount = 0, isMobile = false, onAcknowled
             </div>
           </div>
         </div>
+      ) : null}
+        </>
       ) : null}
     </section>
   );

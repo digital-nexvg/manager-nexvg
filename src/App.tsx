@@ -203,7 +203,7 @@ function App() {
 
   return (
     <main className="app-shell">
-      {isAuthenticated && isMobile ? (
+      {isAuthenticated && isMobile && activeSection !== 'dashboard' ? (
         <button
           type="button"
           className="app-shell__mobile-menu-fab"
@@ -218,7 +218,7 @@ function App() {
         <>
           {activeSection === 'dashboard' ? (
             <DashboardOverview
-              onToggleMenu={undefined}
+              onToggleMenu={() => setIsMenuOpen((current) => !current)}
               isMobile={isMobile}
               mobileMenu={mobileMenu}
             />
@@ -272,9 +272,9 @@ function App() {
         <>
           <DashboardOverview />
           <ClientesPage />
-          <LeadsPage notificationCount={leadNotificationCount} isMobile={isMobile} onAcknowledgeLead={handleAcknowledgeLead} />
           <PagamentosPage />
           <TarefasPage />
+          <LeadsPage notificationCount={leadNotificationCount} isMobile={isMobile} isCollapsible onAcknowledgeLead={handleAcknowledgeLead} />
         </>
       )}
     </main>

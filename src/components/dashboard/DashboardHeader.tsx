@@ -16,39 +16,39 @@ export function DashboardHeader({
   mobileMenu,
 }: DashboardHeaderProps) {
   return (
-    <header className="dashboard-header">
-      <div className="dashboard-header__content">
-        <div className="dashboard-header__brand">
-          <div className="dashboard-header__brand-main">
-            {logoSrc ? (
-              <img src={logoSrc} alt={title} className="dashboard-header__logo" />
-            ) : (
-              <h1>{title}</h1>
-            )}
+    <>
+      <header className="dashboard-header">
+        <div className="dashboard-header__brand-main">
+          {logoSrc ? (
+            <img src={logoSrc} alt={title} className="dashboard-header__logo" />
+          ) : (
+            <h1>{title}</h1>
+          )}
 
-            {isMobile && onToggleMenu ? (
-              <button type="button" className="dashboard-header__menu-button" onClick={onToggleMenu} aria-label="Abrir menu">
-                ☰
-              </button>
-            ) : null}
-          </div>
+          {isMobile && onToggleMenu ? (
+            <button type="button" className="dashboard-header__menu-button" onClick={onToggleMenu} aria-label="Abrir menu">
+              ☰
+            </button>
+          ) : null}
+        </div>
 
-          {isMobile && mobileMenu ? <div className="dashboard-header__mobile-menu">{mobileMenu}</div> : null}
+        {isMobile && mobileMenu ? <div className="dashboard-header__mobile-menu">{mobileMenu}</div> : null}
+      </header>
 
-          <div className="dashboard-header__copy">
+      <section className="dashboard-header__summary">
+        <div className="dashboard-header__copy">
             <div className="dashboard-header__text-stack">
               <p className="dashboard-header__eyebrow dashboard-header__eyebrow--inline">Dashboard</p>
               <h1 className="dashboard-header__title">{title}</h1>
               <p className="dashboard-header__subtitle">{subtitle}</p>
             </div>
-          </div>
         </div>
-      </div>
 
-      <div className="dashboard-header__status">
-        <span className="dashboard-header__dot" aria-hidden="true" />
-        Atualizado agora
-      </div>
-    </header>
+        <div className="dashboard-header__status">
+          <span className="dashboard-header__dot" aria-hidden="true" />
+          Atualizado agora
+        </div>
+      </section>
+    </>
   );
 }
