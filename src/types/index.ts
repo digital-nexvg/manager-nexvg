@@ -38,6 +38,21 @@ export type PaymentFormData = {
   paid: boolean;
 };
 
+export const expenseReasonOptions = ['Passagem', 'Banco de dados', 'GitHub Chat', 'Outro'] as const;
+export type ExpenseReason = (typeof expenseReasonOptions)[number];
+
+export type Expense = {
+  id: string;
+  value: number;
+  expenseDate: string;
+  reason: ExpenseReason;
+  description?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ExpenseFormData = Pick<Expense, 'value' | 'expenseDate' | 'reason' | 'description'>;
+
 export type Client = {
   id: string;
   companyName: string;

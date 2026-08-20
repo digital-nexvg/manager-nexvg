@@ -45,9 +45,11 @@ export function DashboardOverview({ onToggleMenu, isMobile = false, mobileMenu }
 
     refresh();
     window.addEventListener('nexvg-storage-update', refresh);
+    window.addEventListener('nexvg-expenses-update', refresh);
 
     return () => {
       window.removeEventListener('nexvg-storage-update', refresh);
+      window.removeEventListener('nexvg-expenses-update', refresh);
     };
   }, [refreshKey]);
 

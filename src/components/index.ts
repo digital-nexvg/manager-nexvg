@@ -8,3 +8,4 @@ export * from './dashboard/DashboardGrid';
 export * from './dashboard/DashboardHeader';
 export * from './clientes/ClientList';
 export * from './pagamentos/PaymentList';
+export * from './pagamentos/ExpensePanel';

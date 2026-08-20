@@ -1,6 +1,7 @@
-import type { DashboardMetric, DashboardSection, Payment } from '../types';
+import type { DashboardMetric, DashboardSection, Expense, Payment } from '../types';
 import { formatDate, parseDateOnly } from '../utils/formatters';
 import { getClients } from './clientService';
+import { getExpenses } from './expenseService';
 
 function getPaymentStatus(payment: Payment): 'paid' | 'pending' | 'overdue' {
   if (payment.paid) {
@@ -97,7 +98,11 @@ function buildStructureGroups(payments: Array<Payment & { clientName: string }>)
   return Array.from(groups.values());
 }
 
-function buildMonthMetrics(payments: Array<Payment & { clientName: string }>, monthDate: Date): DashboardMetric[] {
+function buildMonthMetrics(
+  payments: Array<Payment & { clientName: string }>,
+  expenses: Expense[],
+  monthDate: Date,
+): DashboardMetric[] {
   const STRUCTURE_PRODUCTION_COST = 40;
   const monthKey = getMonthKey(monthDate);
   const billingMonthPayments = payments.filter((payment) => isPaymentInDueMonth(payment, monthKey));
@@ -129,7 +134,10 @@ function buildMonthMetrics(payments: Array<Payment & { clientName: string }>, mo
   const contractedStructureCompanies = new Set(
     contractedRevenuePayments.map((payment) => payment.clientName.trim().toLowerCase()),
   );
-  const productionCostValue = structureGroupsEndingInMonth.length * STRUCTURE_PRODUCTION_COST;
+  const monthExpenses = expenses.filter((expense) => getMonthKey(parseDateOnly(expense.expenseDate)) === monthKey);
+  const structureProductionCostValue = structureGroupsEndingInMonth.length * STRUCTURE_PRODUCTION_COST;
+  const expensesValue = monthExpenses.reduce((sum, expense) => sum + expense.value, 0);
+  const productionCostValue = structureProductionCostValue + expensesValue;
   const netBillingValue = billingValue - productionCostValue;
 
   const nextDuePayment = pendingMonthPayments
@@ -165,13 +173,19 @@ function buildMonthMetrics(payments: Array<Payment & { clientName: string }>, mo
     {
       title: 'Custo de Produção',
       value: formatCurrency(productionCostValue),
-      subtitle: `${structureGroupsEndingInMonth.length} estruturas finalizadas x ${formatCurrency(STRUCTURE_PRODUCTION_COST)}`,
+      subtitle: `${structureGroupsEndingInMonth.length} estruturas: ${formatCurrency(structureProductionCostValue)} • Despesas: ${formatCurrency(expensesValue)}`,
       tone: 'danger',
       icon: '⚙',
-      details: structureGroupsEndingInMonth.map((group) => ({
-        label: group.clientName,
-        value: `Última parcela: ${formatDate(group.latestDueDate)} • ${formatCurrency(STRUCTURE_PRODUCTION_COST)}`,
-      })),
+      details: [
+        ...structureGroupsEndingInMonth.map((group) => ({
+          label: group.clientName,
+          value: `Última parcela: ${formatDate(group.latestDueDate)} • ${formatCurrency(STRUCTURE_PRODUCTION_COST)}`,
+        })),
+        ...monthExpenses.map((expense) => ({
+          label: expense.description ? `${expense.reason}: ${expense.description}` : expense.reason,
+          value: `${formatDate(expense.expenseDate)} • ${formatCurrency(expense.value)}`,
+        })),
+      ],
     },
     {
       title: 'Recebido',
@@ -224,7 +238,7 @@ function buildMonthMetrics(payments: Array<Payment & { clientName: string }>, mo
 }
 
 export async function getDashboardSections(): Promise<DashboardSection[]> {
-  const clients = await getClients();
+  const [clients, expenses] = await Promise.all([getClients(), getExpenses()]);
   const payments = clients.flatMap((client) => client.payments.map((payment) => ({ ...payment, clientName: client.companyName })));
 
   const activeClients = clients.filter((client) => client.status === 'active').length;
@@ -240,7 +254,7 @@ export async function getDashboardSections(): Promise<DashboardSection[]> {
 
   const monthSections = monthOptions.map((monthDate) => ({
     title: `Mês ${getMonthLabel(monthDate)}`,
-    metrics: buildMonthMetrics(payments, monthDate),
+    metrics: buildMonthMetrics(payments, expenses, monthDate),
   }));
 
   return [

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { MonthlyPaymentForm } from '../components/pagamentos/MonthlyPaymentForm';
 import { PaymentList } from '../components/pagamentos/PaymentList';
 import { StructurePaymentForm } from '../components/pagamentos/StructurePaymentForm';
+import { ExpensePanel } from '../components/pagamentos/ExpensePanel';
 import { addPaymentsToClient, deletePaymentFromClient, getClients, updatePaymentInClient } from '../services/clientService';
 import type { Client, Payment } from '../types';
 import { generateId } from '../utils/id';
@@ -380,6 +381,8 @@ export function PagamentosPage() {
             </>
           )}
         </div>
+
+        <ExpensePanel />
       </div>
     </section>
   );
