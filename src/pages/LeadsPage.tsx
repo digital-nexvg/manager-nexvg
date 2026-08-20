@@ -56,6 +56,7 @@ export function LeadsPage({ notificationCount = 0, isMobile = false, onAcknowled
   const [formData, setFormData] = useState<LeadFormData>(emptyLeadForm());
   const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
   const [leadToConvert, setLeadToConvert] = useState<Lead | null>(null);
+  const [leadDetails, setLeadDetails] = useState<Lead | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -425,6 +426,9 @@ export function LeadsPage({ notificationCount = 0, isMobile = false, onAcknowled
                   </div>
 
                   <div className="leads-page__mobile-actions">
+                    <button type="button" className="btn btn--secondary" onClick={() => setLeadDetails(lead)}>
+                      Ver detalhes
+                    </button>
                     <button type="button" className="btn btn--ghost" onClick={() => handleOpenEdit(lead)}>
                       Editar
                     </button>
@@ -478,6 +482,9 @@ export function LeadsPage({ notificationCount = 0, isMobile = false, onAcknowled
                     </td>
                     <td>
                       <div className="table-actions">
+                        <button type="button" className="btn btn--secondary" onClick={() => setLeadDetails(lead)}>
+                          Ver detalhes
+                        </button>
                         <button type="button" className="btn btn--ghost" onClick={() => handleOpenEdit(lead)}>
                           Editar
                         </button>
@@ -501,6 +508,32 @@ export function LeadsPage({ notificationCount = 0, isMobile = false, onAcknowled
           <p className="empty-state">Nenhum lead encontrado.</p>
         )}
       </div>
+
+      {leadDetails ? (
+        <div className="dashboard-metric-modal" role="dialog" aria-modal="true" aria-label={`Detalhes de ${leadDetails.name}`} onClick={() => setLeadDetails(null)}>
+          <div className="dashboard-metric-modal__card" onClick={(event) => event.stopPropagation()}>
+            <div className="dashboard-metric-modal__header">
+              <div>
+                <p className="section-tag">Lead</p>
+                <h3>{leadDetails.name}</h3>
+              </div>
+              <button type="button" className="btn btn--ghost btn--close dashboard-metric-modal__close" onClick={() => setLeadDetails(null)} aria-label="Fechar detalhes do lead">
+                ×
+              </button>
+            </div>
+            <div className="dashboard-metric-modal__body">
+              <div className="dashboard-metric-modal__list">
+                <div className="dashboard-metric-modal__item"><span className="dashboard-metric-modal__label">WhatsApp</span><span className="dashboard-metric-modal__text">{leadDetails.whatsapp}</span></div>
+                <div className="dashboard-metric-modal__item"><span className="dashboard-metric-modal__label">Cidade</span><span className="dashboard-metric-modal__text">{leadDetails.city || '—'}</span></div>
+                <div className="dashboard-metric-modal__item"><span className="dashboard-metric-modal__label">Segmento</span><span className="dashboard-metric-modal__text">{leadDetails.segment || '—'}</span></div>
+                <div className="dashboard-metric-modal__item"><span className="dashboard-metric-modal__label">Origem</span><span className="dashboard-metric-modal__text">{leadDetails.origin}</span></div>
+                <div className="dashboard-metric-modal__item"><span className="dashboard-metric-modal__label">Estágio</span><span className="dashboard-metric-modal__text">{formatLeadStatus(leadDetails)}</span></div>
+                <div className="dashboard-metric-modal__item"><span className="dashboard-metric-modal__label">Situação</span><span className="dashboard-metric-modal__text">{leadDetails.convertedClientId ? 'Convertido em cliente' : 'Em acompanhamento'}</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {leadToDelete ? (
         <div className="confirmation-modal" role="dialog" aria-modal="true">

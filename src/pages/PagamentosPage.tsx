@@ -90,7 +90,8 @@ export function PagamentosPage() {
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [paymentMode, setPaymentMode] = useState<'structure' | 'monthly' | 'resource'>('structure');
   const [isBillingOpen, setIsBillingOpen] = useState(false);
-  const [isFinanceVisible, setIsFinanceVisible] = useState(false);
+  const [isClientsVisible, setIsClientsVisible] = useState(false);
+  const [isExpensesVisible, setIsExpensesVisible] = useState(false);
   const [structureValue, setStructureValue] = useState(0);
   const [installmentsQuantity, setInstallmentsQuantity] = useState(1);
   const [startDate, setStartDate] = useState(today);
@@ -228,12 +229,20 @@ export function PagamentosPage() {
             <p>Acompanhe o financeiro das empresas com um clique, sem poluir a tela inicial.</p>
           </div>
 
-          <button type="button" className="btn btn--primary" onClick={() => setIsFinanceVisible((current) => !current)}>
-            {isFinanceVisible ? 'Fechar financeiro' : 'Financeiro'}
-          </button>
+          <div className="payments-page__actions">
+            <button type="button" className="btn btn--secondary" onClick={() => setIsClientsVisible((current) => !current)}>
+              {isClientsVisible ? 'Fechar clientes' : 'Clientes'}
+            </button>
+            <button type="button" className="btn btn--primary" onClick={() => setIsBillingOpen((current) => !current)}>
+              {isBillingOpen ? 'Fechar cobrança' : 'Iniciar cobrança'}
+            </button>
+            <button type="button" className="btn btn--secondary" onClick={() => setIsExpensesVisible((current) => !current)}>
+              {isExpensesVisible ? 'Fechar despesas' : 'Despesas'}
+            </button>
+          </div>
         </div>
 
-        {isFinanceVisible ? (
+        {isClientsVisible ? (
           <div className="payments-page__list-card">
             {clients.map((client) => (
               <PaymentList
@@ -247,19 +256,8 @@ export function PagamentosPage() {
           </div>
         ) : null}
 
-        <div className="payments-page__form-card">
-          {!isBillingOpen ? (
-            <div className="payments-page__empty-state">
-              <div>
-                <p className="section-tag">Cobranças</p>
-                <h2>Inicie o fluxo de cobrança</h2>
-                <p>Cadastre cobranças de estrutura ou mensalidade quando precisar.</p>
-              </div>
-              <button type="button" className="btn btn--primary" onClick={() => setIsBillingOpen(true)}>
-                Iniciar cobrança
-              </button>
-            </div>
-          ) : (
+        {isBillingOpen ? (
+          <div className="payments-page__form-card">
             <>
               <div className="payments-page__form-top">
                 <div className="payments-page__tabs">
@@ -379,10 +377,10 @@ export function PagamentosPage() {
                 />
               )}
             </>
-          )}
-        </div>
+          </div>
+        ) : null}
 
-        <ExpensePanel />
+        {isExpensesVisible ? <ExpensePanel /> : null}
       </div>
     </section>
   );

@@ -101,7 +101,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  width: 100%;
+  width: auto;
+  flex: 0 0 auto;
 }
 
 .dashboard-header__copy {
@@ -686,14 +687,17 @@
 
 .dashboard-header__brand {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 14px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .dashboard-header__copy {
   display: flex;
   align-items: center;
+  width: auto;
+  min-width: 0;
 }
 
 .dashboard-header__text-stack {
@@ -707,7 +711,7 @@
 }
 
 .dashboard-header__logo {
-  max-height: 96px;
+  max-height: 64px;
   width: auto;
   object-fit: contain;
 }
