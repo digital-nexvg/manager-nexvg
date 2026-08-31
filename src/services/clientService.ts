@@ -2,7 +2,7 @@ import type { Client, Payment } from '../types';
 import { normalizeClientJourney } from '../utils/clientJourney';
 import { generateId } from '../utils/id';
 import { api } from './api';
-import { notifyStorageUpdate, readStorage, writeStorage } from './storage';
+import { notifyStorageUpdate, readStorage, writeStorage, writeStorageSilently } from './storage';
 
 const CLIENTS_STORAGE_KEY = 'nexvg-clients';
 
@@ -15,10 +15,15 @@ function persistClients(clients: Client[]): void {
   writeStorage(CLIENTS_STORAGE_KEY, clients.map(normalizeClient));
 }
 
+// Caches the API response locally without notifying listeners, since a read shouldn't trigger a refetch storm.
+function cacheClients(clients: Client[]): void {
+  writeStorageSilently(CLIENTS_STORAGE_KEY, clients.map(normalizeClient));
+}
+
 async function fetchClientsFromApi(): Promise<Client[]> {
   const clients = await api.get<Client[]>('/api/clients');
   const normalized = (Array.isArray(clients) ? clients : []).map(normalizeClient);
-  persistClients(normalized);
+  cacheClients(normalized);
   return normalized;
 }
 

@@ -54,3 +54,15 @@ export function writeStorage<T>(key: string, value: T): void {
   storage.setItem(key, JSON.stringify(value));
   notifyStorageUpdate();
 }
+
+// Writes without dispatching the update event, for use when caching data that was just fetched
+// (avoids re-triggering every 'nexvg-storage-update' listener, which would refetch and loop).
+export function writeStorageSilently<T>(key: string, value: T): void {
+  const storage = getStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  storage.setItem(key, JSON.stringify(value));
+}

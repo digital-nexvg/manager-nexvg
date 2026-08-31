@@ -1,7 +1,7 @@
 import type { Lead, LeadConversionResult, LeadFormData } from '../types';
 import { generateId } from '../utils/id';
 import { api } from './api';
-import { readStorage, writeStorage } from './storage';
+import { notifyStorageUpdate, readStorage, writeStorage, writeStorageSilently } from './storage';
 
 const LEADS_STORAGE_KEY = 'nexvg-leads';
 
@@ -34,10 +34,15 @@ function persistLeads(leads: Lead[]): void {
   writeStorage(LEADS_STORAGE_KEY, leads.map(normalizeLead));
 }
 
+// Caches the API response locally without notifying listeners, since a read shouldn't trigger a refetch storm.
+function cacheLeads(leads: Lead[]): void {
+  writeStorageSilently(LEADS_STORAGE_KEY, leads.map(normalizeLead));
+}
+
 async function fetchLeadsFromApi(): Promise<Lead[]> {
   const leads = await api.get<Lead[]>('/api/leads');
   const normalized = (Array.isArray(leads) ? leads : []).map(normalizeLead);
-  persistLeads(normalized);
+  cacheLeads(normalized);
   return normalized;
 }
 
@@ -68,6 +73,7 @@ export async function createLead(data: LeadFormData): Promise<Lead> {
 
   try {
     const nextLeads = await fetchLeadsFromApi();
+    notifyStorageUpdate();
     return nextLeads.find((lead) => lead.id === created.id) ?? normalizeLead(created);
   } catch {
     const lead = normalizeLead(created);
@@ -83,6 +89,7 @@ export async function updateLead(id: string, data: LeadFormData): Promise<Lead> 
 
   try {
     const nextLeads = await fetchLeadsFromApi();
+    notifyStorageUpdate();
     return nextLeads.find((lead) => lead.id === id) ?? normalized;
   } catch {
     const nextLeads = readStoredLeads().map((lead) => (lead.id === id ? normalized : lead));
@@ -96,6 +103,7 @@ export async function deleteLead(id: string): Promise<void> {
 
   try {
     await fetchLeadsFromApi();
+    notifyStorageUpdate();
   } catch {
     const nextLeads = readStoredLeads().filter((lead) => lead.id !== id);
     persistLeads(nextLeads);
@@ -107,6 +115,7 @@ export async function convertLeadToClient(id: string): Promise<LeadConversionRes
 
   try {
     await fetchLeadsFromApi();
+    notifyStorageUpdate();
   } catch {
     const nextLeads = readStoredLeads().map((lead) => (lead.id === id ? { ...lead, convertedAt: new Date().toISOString(), convertedClientId: result.clientId } : lead));
     persistLeads(nextLeads);
