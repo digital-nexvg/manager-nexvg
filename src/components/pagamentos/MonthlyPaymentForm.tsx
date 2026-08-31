@@ -4,10 +4,12 @@ type MonthlyPaymentFormProps = {
   clients: Client[];
   selectedClientId: string | null;
   dueDate: string;
+  contractMonth: string;
   promotionalValue: number;
   fixedValue: number;
   onSelectedClientIdChange: (clientId: string) => void;
   onDueDateChange: (value: string) => void;
+  onContractMonthChange: (value: string) => void;
   onPromotionalValueChange: (value: string) => void;
   onFixedValueChange: (value: string) => void;
   onSubmit: () => void;
@@ -17,10 +19,12 @@ export function MonthlyPaymentForm({
   clients,
   selectedClientId,
   dueDate,
+  contractMonth,
   promotionalValue,
   fixedValue,
   onSelectedClientIdChange,
   onDueDateChange,
+  onContractMonthChange,
   onPromotionalValueChange,
   onFixedValueChange,
   onSubmit,
@@ -36,6 +40,7 @@ export function MonthlyPaymentForm({
       <div className="monthly-payment-form__table" role="table" aria-label="Cadastro de mensalidade">
         <div className="monthly-payment-form__table-head" role="row">
           <span role="columnheader">Empresa</span>
+          <span role="columnheader">Mês do contrato</span>
           <span role="columnheader">Data de vencimento</span>
           <span role="columnheader">Valor promocional</span>
           <span role="columnheader">Valor fixo</span>
@@ -52,6 +57,11 @@ export function MonthlyPaymentForm({
             ))}
           </select>
         </label>
+
+          <label className="monthly-payment-form__table-cell" role="row">
+            <span className="monthly-payment-form__mobile-label">Mês do contrato</span>
+            <input type="month" value={contractMonth} onChange={(event) => onContractMonthChange(event.target.value)} />
+          </label>
 
           <label className="monthly-payment-form__table-cell" role="row">
             <span className="monthly-payment-form__mobile-label">Data de vencimento</span>

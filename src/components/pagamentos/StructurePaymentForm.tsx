@@ -8,6 +8,8 @@ type StructurePaymentFormProps = {
   installmentsQuantity: number;
   startDate: string;
   scheduleDates: string[];
+  resourceName?: string;
+  onResourceNameChange?: (value: string) => void;
   onSelectedClientIdChange: (clientId: string) => void;
   onInstallmentValueChange: (value: string) => void;
   onInstallmentsQuantityChange: (value: string) => void;
@@ -25,6 +27,8 @@ export function StructurePaymentForm({
   installmentsQuantity,
   startDate,
   scheduleDates,
+  resourceName = '',
+  onResourceNameChange,
   onSelectedClientIdChange,
   onInstallmentValueChange,
   onInstallmentsQuantityChange,
@@ -51,6 +55,7 @@ export function StructurePaymentForm({
       >
         <div className="structure-payment-form__table-head" role="row">
           <span role="columnheader">Empresa</span>
+          {isResource ? <span role="columnheader">Nome do recurso</span> : null}
           <span role="columnheader">Valor da parcela</span>
           <span role="columnheader">Qtd. parcelas</span>
           <span role="columnheader">Data inicial</span>
@@ -67,6 +72,18 @@ export function StructurePaymentForm({
             ))}
           </select>
         </label>
+
+          {isResource ? (
+            <label className="structure-payment-form__table-cell" role="row">
+              <span className="structure-payment-form__mobile-label">Nome do recurso</span>
+              <input
+                type="text"
+                placeholder="Ex: Domínio, Hospedagem..."
+                value={resourceName}
+                onChange={(event) => onResourceNameChange?.(event.target.value)}
+              />
+            </label>
+          ) : null}
 
           <label className="structure-payment-form__table-cell" role="row">
             <span className="structure-payment-form__mobile-label">Valor da parcela</span>

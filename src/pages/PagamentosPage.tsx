@@ -52,7 +52,7 @@ const buildStructureSchedule = (startDate: string, quantity: number): string[] =
   return schedule;
 };
 
-const buildYearlyMonthlySchedule = (baseDate: string, value: number): Payment[] => {
+const buildYearlyMonthlySchedule = (baseDate: string, value: number, contractMonth: string): Payment[] => {
   const start = new Date(`${baseDate}T00:00:00`);
   const remainingMonths = 12 - start.getMonth();
 
@@ -68,7 +68,7 @@ const buildYearlyMonthlySchedule = (baseDate: string, value: number): Payment[] 
       fixedValue: value,
       dueDate: formatLocalDate(dueDate),
       month: formatLocalDate(dueDate).slice(0, 7),
-      createdMonth: getCurrentMonthKey(),
+      createdMonth: contractMonth,
       paymentDate: '',
       paid: false,
     };
@@ -96,9 +96,11 @@ export function PagamentosPage() {
   const [installmentsQuantity, setInstallmentsQuantity] = useState(1);
   const [startDate, setStartDate] = useState(today);
   const [scheduleDates, setScheduleDates] = useState<string[]>([today]);
+  const [resourceName, setResourceName] = useState('');
   const [monthlyPromotionalValue, setMonthlyPromotionalValue] = useState(0);
   const [monthlyFixedValue, setMonthlyFixedValue] = useState(0);
   const [dueDate, setDueDate] = useState(today);
+  const [monthlyContractMonth, setMonthlyContractMonth] = useState(getCurrentMonthKey());
 
   useEffect(() => {
     const refreshClients = async () => {
@@ -130,10 +132,14 @@ export function PagamentosPage() {
     }
 
     const contractMonth = getMonthKeyFromDateValue(startDate);
+    const isResource = paymentMode === 'resource';
+    const resourceLabel = resourceName.trim();
 
     const payments: Payment[] = scheduleDates.map((date, index) => ({
       id: generateId(),
-      description: `${paymentMode === 'resource' ? 'Adicionar Recurso' : 'Cobrança da estrutura'} ${index + 1}`,
+      description: isResource
+        ? `Adicionar Recurso: ${resourceLabel || 'Recurso'}${scheduleDates.length > 1 ? ` (${index + 1})` : ''}`
+        : `Cobrança da estrutura ${index + 1}`,
       value: Number(structureValue),
       dueDate: date,
       month: date.slice(0, 7),
@@ -147,6 +153,7 @@ export function PagamentosPage() {
     setStructureValue(0);
     setInstallmentsQuantity(1);
     setStartDate(today);
+    setResourceName('');
     setScheduleDates([today]);
   };
 
@@ -160,7 +167,7 @@ export function PagamentosPage() {
     const fixedValue = monthlyFixedValue;
     const nextClients = await addPaymentsToClient(
       selectedClientId,
-      buildYearlyMonthlySchedule(dueDate, promotionalValue).map((payment) => ({
+      buildYearlyMonthlySchedule(dueDate, promotionalValue, monthlyContractMonth).map((payment) => ({
         ...payment,
         promotionalValue,
         fixedValue,
@@ -171,6 +178,7 @@ export function PagamentosPage() {
     setMonthlyPromotionalValue(0);
     setMonthlyFixedValue(0);
     setDueDate(today);
+    setMonthlyContractMonth(getCurrentMonthKey());
   };
 
   const handleTogglePayment = async (clientId: string, paymentId: string, paid: boolean, paymentDate?: string) => {
@@ -339,6 +347,8 @@ export function PagamentosPage() {
                   installmentsQuantity={installmentsQuantity}
                   startDate={startDate}
                   scheduleDates={scheduleDates}
+                  resourceName={resourceName}
+                  onResourceNameChange={(value) => setResourceName(value)}
                   onSelectedClientIdChange={(clientId) => setSelectedClientId(clientId || null)}
                   onInstallmentValueChange={(value) => setStructureValue(Number(value))}
                   onInstallmentsQuantityChange={(value) => {
@@ -367,10 +377,12 @@ export function PagamentosPage() {
                   clients={clients}
                   selectedClientId={selectedClientId}
                   dueDate={dueDate}
+                  contractMonth={monthlyContractMonth}
                   promotionalValue={monthlyPromotionalValue}
                   fixedValue={monthlyFixedValue}
                   onSelectedClientIdChange={(clientId) => setSelectedClientId(clientId || null)}
                   onDueDateChange={(value) => setDueDate(value)}
+                  onContractMonthChange={(value) => setMonthlyContractMonth(value)}
                   onPromotionalValueChange={(value) => setMonthlyPromotionalValue(parseMoneyInput(value))}
                   onFixedValueChange={(value) => setMonthlyFixedValue(parseMoneyInput(value))}
                   onSubmit={handleSubmitMonthly}
