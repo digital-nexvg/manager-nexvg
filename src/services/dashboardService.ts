@@ -106,9 +106,8 @@ function buildMonthMetrics(
   const STRUCTURE_PRODUCTION_COST = 40;
   const monthKey = getMonthKey(monthDate);
   const billingMonthPayments = payments.filter((payment) => isPaymentInDueMonth(payment, monthKey));
-  const contractedRevenuePayments = payments.filter(
-    (payment) => !isMonthlyPayment(payment) && isPaymentInCreatedMonth(payment, monthKey),
-  );
+  // Mensalidades geradas junto (mesmo createdMonth) entram na receita contratada do mês de origem, mesmo vencendo em meses futuros.
+  const contractedRevenuePayments = payments.filter((payment) => isPaymentInCreatedMonth(payment, monthKey));
   const paidMonthPayments = payments.filter((payment) => payment.paid && isPaymentInReceivedMonth(payment, monthKey));
   const pendingMonthPayments = payments.filter((payment) => !payment.paid && isPaymentInDueMonth(payment, monthKey));
   const overdueMonthPayments = pendingMonthPayments.filter((payment) => getPaymentStatus(payment) === 'overdue');
@@ -127,12 +126,23 @@ function buildMonthMetrics(
     .filter((payment) => isStructurePayment(payment))
     .reduce((sum, payment) => sum + payment.value, 0);
   const contractedRevenueValue = contractedRevenuePayments.reduce((sum, payment) => sum + payment.value, 0);
+  const contractedStructureValue = contractedRevenuePayments
+    .filter((payment) => isStructurePayment(payment))
+    .reduce((sum, payment) => sum + payment.value, 0);
+  const contractedResourceValue = contractedRevenuePayments
+    .filter((payment) => isResourcePayment(payment))
+    .reduce((sum, payment) => sum + payment.value, 0);
+  const contractedMonthlyValue = contractedRevenuePayments
+    .filter((payment) => isMonthlyPayment(payment))
+    .reduce((sum, payment) => sum + payment.value, 0);
   const structureGroups = buildStructureGroups(payments);
   const structureGroupsEndingInMonth = structureGroups.filter(
     (group) => getMonthKey(parseDateOnly(group.latestDueDate)) === monthKey,
   );
   const contractedStructureCompanies = new Set(
-    contractedRevenuePayments.map((payment) => payment.clientName.trim().toLowerCase()),
+    contractedRevenuePayments
+      .filter((payment) => isStructurePayment(payment))
+      .map((payment) => payment.clientName.trim().toLowerCase()),
   );
   const monthExpenses = expenses.filter((expense) => getMonthKey(parseDateOnly(expense.expenseDate)) === monthKey);
   const structureProductionCostValue = structureGroupsEndingInMonth.length * STRUCTURE_PRODUCTION_COST;
@@ -165,7 +175,7 @@ function buildMonthMetrics(
     {
       title: 'Receita Contratada',
       value: formatCurrency(contractedRevenueValue),
-      subtitle: `${contractedStructureCompanies.size} empresas com estrutura gerada no mês`,
+      subtitle: `Estrutura: ${formatCurrency(contractedStructureValue)} • Recursos: ${formatCurrency(contractedResourceValue)} • Mensalidades: ${formatCurrency(contractedMonthlyValue)}\n${contractedStructureCompanies.size} empresas com estrutura gerada no mês`,
       tone: 'warning',
       icon: '📄',
       details: buildPaymentDetails(contractedRevenuePayments),
