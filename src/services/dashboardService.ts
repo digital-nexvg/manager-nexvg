@@ -15,7 +15,7 @@ function getPaymentStatus(payment: Payment): 'paid' | 'pending' | 'overdue' {
   return diffInDays < 0 ? 'overdue' : 'pending';
 }
 
-function formatCurrency(value: number): string {
+export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
@@ -61,6 +61,24 @@ function getMonthLabel(date: Date): string {
   return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 }
 
+function getMonthShortLabel(date: Date): string {
+  const label = date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+// Jun-Dez/2026: mesmo intervalo de meses usado pela visão mensal, reaproveitado pela Visão Geral.
+function getMonthOptions(): Date[] {
+  const startDate = new Date(2026, 5, 1);
+  const endDate = new Date(2026, 11, 1);
+  const monthOptions: Date[] = [];
+
+  for (let date = new Date(startDate); date <= endDate; date.setMonth(date.getMonth() + 1)) {
+    monthOptions.push(new Date(date));
+  }
+
+  return monthOptions;
+}
+
 type StructureGroup = {
   key: string;
   clientName: string;
@@ -98,12 +116,10 @@ function buildStructureGroups(payments: Array<Payment & { clientName: string }>)
   return Array.from(groups.values());
 }
 
-function buildMonthMetrics(
-  payments: Array<Payment & { clientName: string }>,
-  expenses: Expense[],
-  monthDate: Date,
-): DashboardMetric[] {
-  const STRUCTURE_PRODUCTION_COST = 40;
+const STRUCTURE_PRODUCTION_COST = 40;
+
+// Núcleo de cálculo financeiro mensal: única fonte de verdade usada pela visão mensal e pela Visão Geral.
+function computeMonthFinancials(payments: Array<Payment & { clientName: string }>, expenses: Expense[], monthDate: Date) {
   const monthKey = getMonthKey(monthDate);
   const billingMonthPayments = payments.filter((payment) => isPaymentInDueMonth(payment, monthKey));
   // Mensalidades geradas junto (mesmo createdMonth) entram na receita contratada do mês de origem, mesmo vencendo em meses futuros.
@@ -156,6 +172,69 @@ function buildMonthMetrics(
   const monthPaymentList = pendingMonthPayments
     .slice()
     .sort((first, second) => new Date(first.dueDate).getTime() - new Date(second.dueDate).getTime());
+
+  return {
+    monthKey,
+    billingMonthPayments,
+    contractedRevenuePayments,
+    paidMonthPayments,
+    pendingMonthPayments,
+    overdueMonthPayments,
+    receivedValue,
+    pendingValue,
+    overdueValue,
+    billingValue,
+    monthlyBillingValue,
+    resourceBillingValue,
+    structureBillingValue,
+    contractedRevenueValue,
+    contractedStructureValue,
+    contractedResourceValue,
+    contractedMonthlyValue,
+    structureGroupsEndingInMonth,
+    contractedStructureCompanies,
+    monthExpenses,
+    structureProductionCostValue,
+    expensesValue,
+    productionCostValue,
+    netBillingValue,
+    nextDuePayment,
+    monthPaymentList,
+  };
+}
+
+function buildMonthMetrics(
+  payments: Array<Payment & { clientName: string }>,
+  expenses: Expense[],
+  monthDate: Date,
+): DashboardMetric[] {
+  const {
+    billingMonthPayments,
+    contractedRevenuePayments,
+    paidMonthPayments,
+    pendingMonthPayments,
+    overdueMonthPayments,
+    receivedValue,
+    pendingValue,
+    overdueValue,
+    billingValue,
+    monthlyBillingValue,
+    resourceBillingValue,
+    structureBillingValue,
+    contractedRevenueValue,
+    contractedStructureValue,
+    contractedResourceValue,
+    contractedMonthlyValue,
+    structureGroupsEndingInMonth,
+    contractedStructureCompanies,
+    monthExpenses,
+    structureProductionCostValue,
+    expensesValue,
+    productionCostValue,
+    netBillingValue,
+    nextDuePayment,
+    monthPaymentList,
+  } = computeMonthFinancials(payments, expenses, monthDate);
 
   const buildPaymentDetails = (list: Array<Payment & { clientName: string }>) =>
     list.map((payment) => ({
@@ -254,13 +333,7 @@ export async function getDashboardSections(): Promise<DashboardSection[]> {
   const activeClients = clients.filter((client) => client.status === 'active').length;
   const inactiveClients = clients.filter((client) => client.status === 'inactive' || client.status === 'waiting-entry').length;
 
-  const startDate = new Date(2026, 5, 1);
-  const endDate = new Date(2026, 11, 1);
-  const monthOptions = [] as Date[];
-
-  for (let date = new Date(startDate); date <= endDate; date.setMonth(date.getMonth() + 1)) {
-    monthOptions.push(new Date(date));
-  }
+  const monthOptions = getMonthOptions();
 
   const monthSections = monthOptions.map((monthDate) => ({
     title: `Mês ${getMonthLabel(monthDate)}`,
@@ -297,4 +370,96 @@ export async function getDashboardSections(): Promise<DashboardSection[]> {
     },
     ...monthSections,
   ];
+}
+
+export type MonthlyFinancialPoint = {
+  monthKey: string;
+  monthLabel: string;
+  shortLabel: string;
+  faturamento: number;
+  receitaContratada: number;
+  recebido: number;
+  despesas: number;
+  vencidos: number;
+  resultado: number;
+};
+
+type FinancialTotals = Omit<MonthlyFinancialPoint, 'monthKey' | 'monthLabel' | 'shortLabel'>;
+
+export type OverviewFinancialData = {
+  points: MonthlyFinancialPoint[];
+  totals: FinancialTotals;
+  averages: FinancialTotals;
+  growth: {
+    percent: number | null;
+    lastLabel: string;
+    previousLabel: string;
+    lastValue: number;
+    previousValue: number;
+  } | null;
+  maxFaturamento: { monthLabel: string; value: number } | null;
+  minFaturamento: { monthLabel: string; value: number } | null;
+};
+
+const FINANCIAL_TOTAL_KEYS = ['faturamento', 'receitaContratada', 'recebido', 'despesas', 'vencidos', 'resultado'] as const;
+
+// Consolida os mesmos dados/regras da visão mensal (computeMonthFinancials) para alimentar a Visão Geral, sem duplicar lógica financeira.
+export async function getOverviewFinancialData(): Promise<OverviewFinancialData> {
+  const [clients, expenses] = await Promise.all([getClients(), getExpenses()]);
+  const payments = clients.flatMap((client) => client.payments.map((payment) => ({ ...payment, clientName: client.companyName })));
+  const monthOptions = getMonthOptions();
+
+  const points: MonthlyFinancialPoint[] = monthOptions.map((monthDate) => {
+    const financials = computeMonthFinancials(payments, expenses, monthDate);
+
+    return {
+      monthKey: financials.monthKey,
+      monthLabel: `Mês ${getMonthLabel(monthDate)}`,
+      shortLabel: getMonthShortLabel(monthDate),
+      faturamento: financials.billingValue,
+      receitaContratada: financials.contractedRevenueValue,
+      recebido: financials.receivedValue,
+      despesas: financials.productionCostValue,
+      vencidos: financials.overdueValue,
+      resultado: financials.netBillingValue,
+    };
+  });
+
+  const totals = FINANCIAL_TOTAL_KEYS.reduce((acc, key) => {
+    acc[key] = points.reduce((sum, point) => sum + point[key], 0);
+    return acc;
+  }, {} as FinancialTotals);
+
+  const monthCount = points.length || 1;
+  const averages = FINANCIAL_TOTAL_KEYS.reduce((acc, key) => {
+    acc[key] = totals[key] / monthCount;
+    return acc;
+  }, {} as FinancialTotals);
+
+  let growth: OverviewFinancialData['growth'] = null;
+  if (points.length >= 2) {
+    const last = points[points.length - 1];
+    const previous = points[points.length - 2];
+    const percent = previous.faturamento !== 0 ? ((last.faturamento - previous.faturamento) / Math.abs(previous.faturamento)) * 100 : null;
+
+    growth = {
+      percent,
+      lastLabel: last.monthLabel,
+      previousLabel: previous.monthLabel,
+      lastValue: last.faturamento,
+      previousValue: previous.faturamento,
+    };
+  }
+
+  const maxPoint = points.length ? points.reduce((max, point) => (point.faturamento > max.faturamento ? point : max)) : null;
+  const minPoint = points.length ? points.reduce((min, point) => (point.faturamento < min.faturamento ? point : min)) : null;
+
+  return {
+    points,
+    totals,
+    averages,
+    growth,
+    maxFaturamento: maxPoint ? { monthLabel: maxPoint.monthLabel, value: maxPoint.faturamento } : null,
+    minFaturamento: minPoint ? { monthLabel: minPoint.monthLabel, value: minPoint.faturamento } : null,
+  };
 }

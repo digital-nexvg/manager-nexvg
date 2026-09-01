@@ -4,6 +4,7 @@ import { DashboardCard } from './DashboardCard';
 import { DashboardGrid } from './DashboardGrid';
 import { DashboardHeader } from './DashboardHeader';
 import { DashboardMetricModal } from './DashboardMetricModal';
+import { FinancialOverview } from './FinancialOverview';
 import { getDashboardSections } from '../../services/dashboardService';
 
 function getMonthTitle(date: Date): string {
@@ -23,6 +24,7 @@ export function DashboardOverview({ onToggleMenu, isMobile = false, mobileMenu }
   const [selectedMonth, setSelectedMonth] = useState<string>(getMonthTitle(new Date()));
   const [isPreviousMonthsOpen, setIsPreviousMonthsOpen] = useState(false);
   const [isFutureMonthsOpen, setIsFutureMonthsOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'mensal' | 'geral'>('mensal');
 
   useEffect(() => {
     const refresh = async () => {
@@ -75,7 +77,32 @@ export function DashboardOverview({ onToggleMenu, isMobile = false, mobileMenu }
         mobileMenu={mobileMenu}
       />
 
-      <div className="dashboard-section">
+      <div className="dashboard-view-toggle" role="tablist" aria-label="Alternar visão do dashboard">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={viewMode === 'mensal'}
+          className={`btn ${viewMode === 'mensal' ? 'btn--primary' : 'btn--secondary'}`}
+          onClick={() => setViewMode('mensal')}
+        >
+          Visão mensal
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={viewMode === 'geral'}
+          className={`btn ${viewMode === 'geral' ? 'btn--primary' : 'btn--secondary'}`}
+          onClick={() => setViewMode('geral')}
+        >
+          📊 Visão geral
+        </button>
+      </div>
+
+      {viewMode === 'geral' ? (
+        <FinancialOverview />
+      ) : (
+        <>
+          <div className="dashboard-section">
         <div className="dashboard-month-nav__top">
           <div className="dashboard-month-nav__labels">
             <span className="dashboard-month-nav__label">Mês atual</span>
@@ -190,6 +217,8 @@ export function DashboardOverview({ onToggleMenu, isMobile = false, mobileMenu }
           </DashboardGrid>
         </div>
       ) : null}
+        </>
+      )}
 
       <DashboardMetricModal
         isOpen={Boolean(selectedMetric)}
