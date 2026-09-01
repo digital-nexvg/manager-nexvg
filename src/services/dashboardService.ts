@@ -403,6 +403,18 @@ export type OverviewFinancialData = {
 
 const FINANCIAL_TOTAL_KEYS = ['faturamento', 'receitaContratada', 'recebido', 'despesas', 'vencidos', 'resultado'] as const;
 
+// Início oficial das operações financeiras da NEXVG: meses anteriores não entram em nenhum cálculo/indicador da Visão Geral.
+const NEXVG_START_DATE = new Date(2026, 6, 1);
+const NEXVG_ANNUAL_PERIOD_MONTHS = 6; // Julho a Dezembro
+
+function getNexvgAnnualEndDate(): Date {
+  return new Date(NEXVG_START_DATE.getFullYear(), NEXVG_START_DATE.getMonth() + NEXVG_ANNUAL_PERIOD_MONTHS - 1, 1);
+}
+
+function sumPoints(list: MonthlyFinancialPoint[], key: (typeof FINANCIAL_TOTAL_KEYS)[number]): number {
+  return list.reduce((sum, point) => sum + point[key], 0);
+}
+
 // Consolida os mesmos dados/regras da visão mensal (computeMonthFinancials) para alimentar a Visão Geral, sem duplicar lógica financeira.
 export async function getOverviewFinancialData(): Promise<OverviewFinancialData> {
   const [clients, expenses] = await Promise.all([getClients(), getExpenses()]);
@@ -425,21 +437,38 @@ export async function getOverviewFinancialData(): Promise<OverviewFinancialData>
     };
   });
 
+  // Meses anteriores a julho/2026 (ex: junho) continuam aparecendo no gráfico, mas ficam de fora de todo cálculo/indicador abaixo.
+  const startKey = getMonthKey(NEXVG_START_DATE);
+  const annualEndKey = getMonthKey(getNexvgAnnualEndDate());
+  const todayKey = getMonthKey(new Date());
+  const currentBoundKey = todayKey < annualEndKey ? todayKey : annualEndKey;
+
+  const annualPeriodPoints = points.filter((point) => point.monthKey >= startKey && point.monthKey <= annualEndKey);
+  // "Atual": julho até o mês vigente, sempre incluindo o mês vigente mesmo que ainda esteja zerado.
+  const currentPeriodPoints = annualPeriodPoints.filter((point) => point.monthKey <= currentBoundKey);
+
   const totals = FINANCIAL_TOTAL_KEYS.reduce((acc, key) => {
-    acc[key] = points.reduce((sum, point) => sum + point[key], 0);
+    acc[key] = sumPoints(annualPeriodPoints, key);
     return acc;
   }, {} as FinancialTotals);
 
-  const monthCount = points.length || 1;
-  const averages = FINANCIAL_TOTAL_KEYS.reduce((acc, key) => {
-    acc[key] = totals[key] / monthCount;
-    return acc;
-  }, {} as FinancialTotals);
+  const currentMonthCount = currentPeriodPoints.length || 1;
+  const monthsWithReceipt = annualPeriodPoints.filter((point) => point.recebido > 0);
+
+  const averages: FinancialTotals = {
+    faturamento: sumPoints(currentPeriodPoints, 'faturamento') / currentMonthCount,
+    receitaContratada: sumPoints(currentPeriodPoints, 'receitaContratada') / currentMonthCount,
+    // Média de recebido só considera meses com recebimento efetivo > 0 (meses futuros/sem recebimento não entram no denominador).
+    recebido: monthsWithReceipt.length ? sumPoints(monthsWithReceipt, 'recebido') / monthsWithReceipt.length : 0,
+    despesas: sumPoints(annualPeriodPoints, 'despesas') / (annualPeriodPoints.length || 1),
+    vencidos: sumPoints(annualPeriodPoints, 'vencidos') / (annualPeriodPoints.length || 1),
+    resultado: sumPoints(annualPeriodPoints, 'resultado') / (annualPeriodPoints.length || 1),
+  };
 
   let growth: OverviewFinancialData['growth'] = null;
-  if (points.length >= 2) {
-    const last = points[points.length - 1];
-    const previous = points[points.length - 2];
+  if (currentPeriodPoints.length >= 2) {
+    const last = currentPeriodPoints[currentPeriodPoints.length - 1];
+    const previous = currentPeriodPoints[currentPeriodPoints.length - 2];
     const percent = previous.faturamento !== 0 ? ((last.faturamento - previous.faturamento) / Math.abs(previous.faturamento)) * 100 : null;
 
     growth = {
@@ -451,8 +480,12 @@ export async function getOverviewFinancialData(): Promise<OverviewFinancialData>
     };
   }
 
-  const maxPoint = points.length ? points.reduce((max, point) => (point.faturamento > max.faturamento ? point : max)) : null;
-  const minPoint = points.length ? points.reduce((min, point) => (point.faturamento < min.faturamento ? point : min)) : null;
+  const maxPoint = annualPeriodPoints.length
+    ? annualPeriodPoints.reduce((max, point) => (point.faturamento > max.faturamento ? point : max))
+    : null;
+  const minPoint = annualPeriodPoints.length
+    ? annualPeriodPoints.reduce((min, point) => (point.faturamento < min.faturamento ? point : min))
+    : null;
 
   return {
     points,
@@ -463,3 +496,4 @@ export async function getOverviewFinancialData(): Promise<OverviewFinancialData>
     minFaturamento: minPoint ? { monthLabel: minPoint.monthLabel, value: minPoint.faturamento } : null,
   };
 }
+
