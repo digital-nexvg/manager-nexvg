@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createExpense, deleteExpense, getExpenses } from '../../services/expenseService';
 import { expenseReasonOptions, type Expense, type ExpenseReason } from '../../types';
 import { formatDate } from '../../utils/formatters';
@@ -12,6 +12,12 @@ function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
+function formatMonth(key: string): string {
+  const [year, month] = key.split('-').map(Number);
+  const label = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date(year, month - 1, 1));
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 export function ExpensePanel() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [value, setValue] = useState('');
@@ -19,6 +25,15 @@ export function ExpensePanel() {
   const [reason, setReason] = useState<ExpenseReason>('Passagem');
   const [description, setDescription] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState('');
+
+  const months = useMemo(
+    () => Array.from(new Set(expenses.map((expense) => expense.expenseDate.slice(0, 7)))).sort().reverse(),
+    [expenses],
+  );
+  const activeMonth = months.includes(selectedMonth) ? selectedMonth : months[0] ?? '';
+  const monthExpenses = expenses.filter((expense) => expense.expenseDate.slice(0, 7) === activeMonth);
+  const monthTotal = monthExpenses.reduce((sum, expense) => sum + expense.value, 0);
 
   const refreshExpenses = async () => {
     try {
@@ -44,6 +59,7 @@ export function ExpensePanel() {
         description: reason === 'Outro' ? description : undefined,
       });
       setExpenses((current) => [createdExpense, ...current]);
+      setSelectedMonth(createdExpense.expenseDate.slice(0, 7));
       setValue('');
       setReason('Passagem');
       setDescription('');
@@ -106,7 +122,14 @@ export function ExpensePanel() {
 
       {expenses.length ? (
         <div className="payment-list">
-          {expenses.map((expense) => (
+          <label>
+            <span>Período</span>
+            <select value={activeMonth} onChange={(event) => setSelectedMonth(event.target.value)}>
+              {months.map((month) => <option key={month} value={month}>{formatMonth(month)}</option>)}
+            </select>
+          </label>
+          <p><strong>Total do mês: {formatCurrency(monthTotal)}</strong></p>
+          {monthExpenses.map((expense) => (
             <div className="payment-list__item" key={expense.id}>
               <div>
                 <strong>{expense.reason}{expense.description ? `: ${expense.description}` : ''}</strong>

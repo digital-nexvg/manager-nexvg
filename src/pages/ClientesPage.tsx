@@ -84,11 +84,22 @@ export function ClientesPage() {
   const handleSubmit = async () => {
     const existingClient = clients.find((client) => client.id === editingId);
 
+    const now = new Date();
+    const currentMonthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+    const existingPayments = existingClient?.payments ?? [];
+    // Inativo: mantém pagos e pendências de meses anteriores; remove cobranças do mês atual em diante.
+    // Exceção: Porto (cancelou no mês passado) é ajustada manualmente.
+    const isPortoException = formData.companyName.trim().toLowerCase().startsWith('porto');
+    const payments =
+      formData.status === 'inactive' && !isPortoException
+        ? existingPayments.filter((payment) => payment.paid || payment.dueDate < currentMonthStart)
+        : existingPayments;
+
     const payload: Client = {
       id: editingId ?? generateId(),
       ...formData,
       email: existingClient?.email,
-      payments: existingClient?.payments ?? [],
+      payments,
       journey: existingClient?.journey,
     };
 
