@@ -1,3 +1,5 @@
+import { withProcessing } from './processing';
+
 function resolveApiBaseUrl() {
   const rawValue = import.meta.env.VITE_API_URL?.trim();
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
@@ -81,9 +83,15 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return undefined as T;
 }
 
+// Mutations show the global processing overlay; reads (GET) do not.
+const mutate = <T>(path: string, options: RequestInit, message: string) =>
+  withProcessing(() => request<T>(path, options), message);
+
 export const api = {
   get: <T>(path: string) => request<T>(path),
-  post: <T>(path: string, body?: unknown) => request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
-  put: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
-  delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+  post: <T>(path: string, body?: unknown) =>
+    mutate<T>(path, { method: 'POST', body: JSON.stringify(body) }, 'Salvando informações…'),
+  put: <T>(path: string, body?: unknown) =>
+    mutate<T>(path, { method: 'PUT', body: JSON.stringify(body) }, 'Atualizando informações…'),
+  delete: <T>(path: string) => mutate<T>(path, { method: 'DELETE' }, 'Excluindo registro…'),
 };
