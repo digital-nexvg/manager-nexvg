@@ -117,6 +117,12 @@ function buildStructureGroups(payments: Array<Payment & { clientName: string }>)
 }
 
 const STRUCTURE_PRODUCTION_COST = 40;
+const PRODUCTION_COST_EXEMPT_CLIENTS = new Set(['nexus', 'victor repara']);
+
+function hasStructureProductionCost(group: StructureGroup): boolean {
+  const clientName = group.clientName.trim().replace(/\s+/g, ' ').toLowerCase();
+  return !PRODUCTION_COST_EXEMPT_CLIENTS.has(clientName);
+}
 
 // Núcleo de cálculo financeiro mensal: única fonte de verdade usada pela visão mensal e pela Visão Geral.
 function computeMonthFinancials(payments: Array<Payment & { clientName: string }>, expenses: Expense[], monthDate: Date) {
@@ -161,7 +167,8 @@ function computeMonthFinancials(payments: Array<Payment & { clientName: string }
       .map((payment) => payment.clientName.trim().toLowerCase()),
   );
   const monthExpenses = expenses.filter((expense) => getMonthKey(parseDateOnly(expense.expenseDate)) === monthKey);
-  const structureProductionCostValue = structureGroupsEndingInMonth.length * STRUCTURE_PRODUCTION_COST;
+  const chargeableStructureGroupsEndingInMonth = structureGroupsEndingInMonth.filter(hasStructureProductionCost);
+  const structureProductionCostValue = chargeableStructureGroupsEndingInMonth.length * STRUCTURE_PRODUCTION_COST;
   const expensesValue = monthExpenses.reduce((sum, expense) => sum + expense.value, 0);
   const productionCostValue = structureProductionCostValue + expensesValue;
   const netBillingValue = billingValue - productionCostValue;
@@ -194,6 +201,7 @@ function computeMonthFinancials(payments: Array<Payment & { clientName: string }
     structureGroupsEndingInMonth,
     contractedStructureCompanies,
     monthExpenses,
+    chargeableStructureGroupsEndingInMonth,
     structureProductionCostValue,
     expensesValue,
     productionCostValue,
@@ -225,7 +233,7 @@ function buildMonthMetrics(
     contractedStructureValue,
     contractedResourceValue,
     contractedMonthlyValue,
-    structureGroupsEndingInMonth,
+    chargeableStructureGroupsEndingInMonth,
     contractedStructureCompanies,
     monthExpenses,
     structureProductionCostValue,
@@ -262,11 +270,11 @@ function buildMonthMetrics(
     {
       title: 'Custo de Produção',
       value: formatCurrency(productionCostValue),
-      subtitle: `${structureGroupsEndingInMonth.length} estruturas: ${formatCurrency(structureProductionCostValue)} • Despesas: ${formatCurrency(expensesValue)}`,
+      subtitle: `${chargeableStructureGroupsEndingInMonth.length} estruturas com custo: ${formatCurrency(structureProductionCostValue)} • Despesas: ${formatCurrency(expensesValue)}`,
       tone: 'danger',
       icon: '⚙',
       details: [
-        ...structureGroupsEndingInMonth.map((group) => ({
+        ...chargeableStructureGroupsEndingInMonth.map((group) => ({
           label: group.clientName,
           value: `Última parcela: ${formatDate(group.latestDueDate)} • ${formatCurrency(STRUCTURE_PRODUCTION_COST)}`,
         })),
@@ -496,4 +504,3 @@ export async function getOverviewFinancialData(): Promise<OverviewFinancialData>
     minFaturamento: minPoint ? { monthLabel: minPoint.monthLabel, value: minPoint.faturamento } : null,
   };
 }
-
