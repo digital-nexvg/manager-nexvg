@@ -1513,6 +1513,14 @@
   text-transform: uppercase;
 }
 
+.client-table tbody tr.client-table__editor-row:hover {
+  background: transparent;
+}
+
+.client-table td.client-table__editor-cell {
+  padding: 12px 0;
+}
+
 .client-table tbody tr:hover {
   background: rgba(255, 255, 255, 0.02);
 }
@@ -2958,6 +2966,16 @@ body {
   .client-table td:nth-child(6)::before { content: 'Próxima etapa'; }
   .client-table td:nth-child(7)::before { content: none; }
 
+  .client-table td.client-table__editor-cell {
+    display: block;
+    padding: 0;
+    border-bottom: 0;
+    text-align: left;
+  }
+
+  .client-table td.client-table__editor-cell::before {
+    content: none;
+  }
   .client-table__name-trigger {
     width: auto;
     justify-content: flex-end;

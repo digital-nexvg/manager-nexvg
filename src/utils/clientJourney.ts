@@ -106,7 +106,10 @@ export function getClientJourneyCompletionStatus(journey?: ClientJourney): strin
     return 'Cancelado';
   }
 
-  const hasPendingSteps = normalizedJourney.steps.some((step) => step.id !== CANCELED_STEP_ID && !step.done);
+  // Só as etapas base (fixas) definem se o cliente ainda é novo; etapas criadas não contam.
+  const hasPendingSteps = normalizedJourney.steps.some(
+    (step) => isTemplateJourneyStepId(step.id) && step.id !== CANCELED_STEP_ID && !step.done,
+  );
 
   return hasPendingSteps ? 'Novo Cliente' : 'Cliente Ativo';
 }

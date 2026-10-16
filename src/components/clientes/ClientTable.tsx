@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import type { Client } from '../../types';
 import { formatDate } from '../../utils/formatters';
 import { PaymentDetailsModal } from './PaymentDetailsModal';
@@ -11,9 +11,11 @@ type ClientTableProps = {
   onEdit: (client: Client) => void;
   onDelete: (id: string) => void;
   onSaveJourney: (client: Client) => void;
+  editingId?: string | null;
+  renderEditor?: () => ReactNode;
 };
 
-export function ClientTable({ clients, onEdit, onDelete, onSaveJourney }: ClientTableProps) {
+export function ClientTable({ clients, onEdit, onDelete, onSaveJourney, editingId, renderEditor }: ClientTableProps) {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [journeyClient, setJourneyClient] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
@@ -52,7 +54,8 @@ export function ClientTable({ clients, onEdit, onDelete, onSaveJourney }: Client
               .sort((first, second) => new Date(first.dueDate).getTime() - new Date(second.dueDate).getTime())[0];
 
             return (
-              <tr key={client.id}>
+              <Fragment key={client.id}>
+              <tr>
                 <td>
                   <button
                     type="button"
@@ -99,6 +102,14 @@ export function ClientTable({ clients, onEdit, onDelete, onSaveJourney }: Client
                   </div>
                 </td>
               </tr>
+              {editingId === client.id && renderEditor ? (
+                <tr className="client-table__editor-row">
+                  <td colSpan={7} className="client-table__editor-cell">
+                    {renderEditor()}
+                  </td>
+                </tr>
+              ) : null}
+              </Fragment>
             );
           })}
         </tbody>

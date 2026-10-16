@@ -211,8 +211,25 @@ export function ClientesPage() {
     return nextClients.find((nextClient) => nextClient.id === client.id) ?? client;
   };
 
+  const renderEditor = () => (
+    <div className="clients-page__form-card">
+      <div className="clients-page__form-head">
+        <h2>Editar cliente</h2>
+        <button type="button" className="btn btn--ghost btn--close" onClick={() => resetForm()} aria-label="Fechar formulário">
+          ×
+        </button>
+      </div>
+      <ClientForm
+        formData={formData}
+        isEditing
+        onChange={handleChange}
+        onSubmit={handleSubmit}
+        onCancel={resetForm}
+      />
+    </div>
+  );
+
   return (
-    <section className="clients-page">
       <div className="clients-page__header">
         <div>
           <p className="section-tag">Clientes</p>
@@ -256,17 +273,17 @@ export function ClientesPage() {
 
         {isClientsVisible ? (
           <>
-            {showForm ? (
+            {showForm && !editingId ? (
               <div className="clients-page__form-card clients-page__form-card--top">
                 <div className="clients-page__form-head">
-                  <h2>{editingId ? 'Editar cliente' : 'Adicionar cliente'}</h2>
+                  <h2>Adicionar cliente</h2>
                   <button type="button" className="btn btn--ghost btn--close" onClick={() => resetForm()} aria-label="Fechar formulário">
                     ×
                   </button>
                 </div>
                 <ClientForm
                   formData={formData}
-                  isEditing={Boolean(editingId)}
+                  isEditing={false}
                   onChange={handleChange}
                   onSubmit={handleSubmit}
                   onCancel={resetForm}
@@ -346,6 +363,8 @@ export function ClientesPage() {
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                   onSaveJourney={handleSaveJourney}
+                  editingId={showForm ? editingId : null}
+                  renderEditor={renderEditor}
                 />
               ) : null}
             </div>
@@ -361,6 +380,8 @@ export function ClientesPage() {
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                   onSaveJourney={handleSaveJourney}
+                  editingId={showForm ? editingId : null}
+                  renderEditor={renderEditor}
                 />
               </div>
             ) : statusFilter === 'inactive' ? (
