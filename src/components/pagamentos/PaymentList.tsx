@@ -7,7 +7,43 @@ type PaymentListProps = {
   onAddPayment: (clientId: string) => void;
   onTogglePayment: (clientId: string, paymentId: string, paid: boolean, paymentDate?: string) => void;
   onDeletePayment: (clientId: string, paymentId: string) => void;
+  onUpdatePaymentReason: (clientId: string, paymentId: string, reason: string) => void;
 };
+
+type PaymentMonthGroup = {
+  key: string;
+  payments: Payment[];
+  total: number;
+};
+
+function groupPaymentsByMonth(payments: Payment[]): PaymentMonthGroup[] {
+  const groups = new Map<string, Payment[]>();
+
+  payments.forEach((payment) => {
+    const month = payment.month || payment.dueDate.slice(0, 7) || 'sem-mes';
+    groups.set(month, [...(groups.get(month) ?? []), payment]);
+  });
+
+  return [...groups.entries()]
+    .map(([key, monthlyPayments]) => ({
+      key,
+      payments: monthlyPayments,
+      total: monthlyPayments.reduce((sum, payment) => sum + payment.value, 0),
+    }))
+    .sort((first, second) => second.key.localeCompare(first.key));
+}
+
+function formatMonth(month: string): string {
+  if (month === 'sem-mes') {
+    return 'Mês não informado';
+  }
+
+  return new Date(`${month}-01T00:00:00`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+}
+
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+}
 
 function getStatus(payment: Payment) {
   if (payment.paid) {
@@ -25,8 +61,10 @@ function getStatus(payment: Payment) {
   return 'pending';
 }
 
-export function PaymentList({ client, onTogglePayment, onDeletePayment }: PaymentListProps) {
+export function PaymentList({ client, onTogglePayment, onDeletePayment, onUpdatePaymentReason }: PaymentListProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const [editedReasons, setEditedReasons] = useState<Record<string, string>>({});
   const [paymentToConfirm, setPaymentToConfirm] = useState<Payment | null>(null);
   const [paymentDate, setPaymentDate] = useState(() => new Date().toISOString().slice(0, 10));
   const pendingPayments = client.payments.filter((payment) => !payment.paid);
@@ -34,6 +72,7 @@ export function PaymentList({ client, onTogglePayment, onDeletePayment }: Paymen
   const nextDuePayment = pendingPayments
     .slice()
     .sort((first, second) => new Date(first.dueDate).getTime() - new Date(second.dueDate).getTime())[0];
+  const monthlyGroups = groupPaymentsByMonth(client.payments);
 
   return (
     <section className="payment-list">
@@ -45,7 +84,7 @@ export function PaymentList({ client, onTogglePayment, onDeletePayment }: Paymen
           </div>
 
           <div className="payment-list__summary-inline-group">
-            <span className="payment-list__summary-inline">Valor pendente: R$ {pendingValue.toFixed(2)}</span>
+            <span className="payment-list__summary-inline">Valor pendente: {formatCurrency(pendingValue)}</span>
             <span className="payment-list__summary-inline">
               Proximo vencimento: {nextDuePayment ? formatDate(nextDuePayment.dueDate) : '—'}
             </span>
@@ -62,54 +101,108 @@ export function PaymentList({ client, onTogglePayment, onDeletePayment }: Paymen
           {client.payments.length === 0 ? (
             <p className="empty-state">Este cliente ainda não possui pagamentos.</p>
           ) : (
-            <div className="payment-list__rows">
-              {client.payments.map((payment) => {
-                const status = getStatus(payment);
-
-                return (
-                  <article key={payment.id} className={`payment-row payment-row--${status}`}>
-                    <div className="payment-row__main">
-                      <div>
-                        <strong>{payment.description}</strong>
-                        <p>{formatDate(payment.dueDate)}</p>
-                      </div>
-
-                      <span className="payment-row__value">R$ {payment.value.toFixed(2)}</span>
+            <div className="payment-list__months">
+              {monthlyGroups.map((group) => (
+                <section key={group.key} className="payment-month">
+                  <div className="payment-month__summary">
+                    <div>
+                      <strong>{formatMonth(group.key)}</strong>
+                      <span>{group.payments.length} {group.payments.length === 1 ? 'cobrança' : 'cobranças'}</span>
                     </div>
+                    <strong className="payment-month__total">Total do mês: {formatCurrency(group.total)}</strong>
+                    <button
+                      type="button"
+                      className="btn btn--secondary btn--small"
+                      aria-expanded={selectedMonth === group.key}
+                      onClick={() => setSelectedMonth((current) => (current === group.key ? null : group.key))}
+                    >
+                      {selectedMonth === group.key ? 'Ocultar detalhes' : 'Ver detalhes'}
+                    </button>
+                  </div>
 
-                    <div className="payment-row__meta">
-                      <label className="payment-row__checkbox">
-                        <input
-                          type="checkbox"
-                          checked={payment.paid}
-                          onChange={(event) => {
-                            if (event.target.checked) {
-                              setPaymentToConfirm(payment);
-                              setPaymentDate(payment.paymentDate || new Date().toISOString().slice(0, 10));
-                              return;
-                            }
+                  {selectedMonth === group.key ? (
+                    <div className="payment-list__rows">
+                      {group.payments.map((payment) => {
+                        const status = getStatus(payment);
+                        const currentReason = payment.reason ?? '';
+                        const editedReason = editedReasons[payment.id] ?? currentReason;
 
-                            onTogglePayment(client.id, payment.id, false);
-                          }}
-                        />
-                        <span>{payment.paid ? 'Pago' : 'Em aberto'}</span>
-                      </label>
+                        return (
+                          <article key={payment.id} className={`payment-row payment-row--${status}`}>
+                            <div className="payment-row__main">
+                              <div>
+                                <strong>{payment.description}</strong>
+                                <p>{formatDate(payment.dueDate)}</p>
+                              </div>
 
-                      <span className="payment-row__status">
-                        {status === 'paid' ? 'Pago' : status === 'pending' ? 'Em aberto' : 'Vencido'}
-                      </span>
+                              <span className="payment-row__value">{formatCurrency(payment.value)}</span>
+                            </div>
 
-                      <button
-                        type="button"
-                        className="btn btn--danger btn--small"
-                        onClick={() => onDeletePayment(client.id, payment.id)}
-                      >
-                        Excluir
-                      </button>
+                            <div className="payment-row__reason">
+                              <label htmlFor={`payment-reason-${payment.id}`}>Motivo da cobrança</label>
+                              <input
+                                id={`payment-reason-${payment.id}`}
+                                type="text"
+                                value={editedReason}
+                                placeholder="Adicione o motivo (opcional)"
+                                onChange={(event) =>
+                                  setEditedReasons((current) => ({ ...current, [payment.id]: event.target.value }))
+                                }
+                              />
+                              <button
+                                type="button"
+                                className="btn btn--secondary btn--small"
+                                disabled={editedReason === currentReason}
+                                onClick={() => {
+                                  onUpdatePaymentReason(client.id, payment.id, editedReason.trim());
+                                  setEditedReasons((current) => {
+                                    const next = { ...current };
+                                    delete next[payment.id];
+                                    return next;
+                                  });
+                                }}
+                              >
+                                Salvar motivo
+                              </button>
+                            </div>
+
+                            <div className="payment-row__meta">
+                              <label className="payment-row__checkbox">
+                                <input
+                                  type="checkbox"
+                                  checked={payment.paid}
+                                  onChange={(event) => {
+                                    if (event.target.checked) {
+                                      setPaymentToConfirm(payment);
+                                      setPaymentDate(payment.paymentDate || new Date().toISOString().slice(0, 10));
+                                      return;
+                                    }
+
+                                    onTogglePayment(client.id, payment.id, false);
+                                  }}
+                                />
+                                <span>{payment.paid ? 'Pago' : 'Em aberto'}</span>
+                              </label>
+
+                              <span className="payment-row__status">
+                                {status === 'paid' ? 'Pago' : status === 'pending' ? 'Em aberto' : 'Vencido'}
+                              </span>
+
+                              <button
+                                type="button"
+                                className="btn btn--danger btn--small"
+                                onClick={() => onDeletePayment(client.id, payment.id)}
+                              >
+                                Excluir
+                              </button>
+                            </div>
+                          </article>
+                        );
+                      })}
                     </div>
-                  </article>
-                );
-              })}
+                  ) : null}
+                </section>
+              ))}
             </div>
           )}
         </div>

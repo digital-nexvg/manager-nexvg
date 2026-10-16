@@ -8,7 +8,6 @@
   gap: 16px;
 }
 
-
 .login-page {
   min-height: 100vh;
   display: grid;
@@ -2040,6 +2039,19 @@
   gap: 10px;
 }
 
+.payment-reason-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--text-muted);
+}
+
+.payment-reason-field input,
+.payment-row__reason input {
+  width: 100%;
+  min-width: 0;
+}
+
 .structure-payment-form__date-field {
   display: flex;
   flex-direction: column;
@@ -2307,6 +2319,76 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.payment-list__months {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.payment-month {
+  padding: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.payment-month__summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.payment-month__summary > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.payment-month__summary > div span {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.payment-month__total {
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+
+.payment-row__reason {
+  display: grid;
+  grid-template-columns: minmax(130px, auto) minmax(180px, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.payment-row__reason .btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
+@media (max-width: 768px) {
+  .payment-month__summary {
+    flex-wrap: wrap;
+  }
+
+  .payment-month__summary > div {
+    flex-basis: 100%;
+  }
+
+  .payment-row__reason {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 .payment-row {

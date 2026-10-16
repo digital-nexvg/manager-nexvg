@@ -97,6 +97,7 @@ export function PagamentosPage() {
   const [startDate, setStartDate] = useState(today);
   const [scheduleDates, setScheduleDates] = useState<string[]>([today]);
   const [resourceName, setResourceName] = useState('');
+  const [paymentReason, setPaymentReason] = useState('');
   const [monthlyPromotionalValue, setMonthlyPromotionalValue] = useState(0);
   const [monthlyFixedValue, setMonthlyFixedValue] = useState(0);
   const [dueDate, setDueDate] = useState(today);
@@ -140,6 +141,7 @@ export function PagamentosPage() {
       description: isResource
         ? `Adicionar Recurso: ${resourceLabel || 'Recurso'}${scheduleDates.length > 1 ? ` (${index + 1})` : ''}`
         : `Cobrança da estrutura ${index + 1}`,
+      reason: paymentReason.trim(),
       value: Number(structureValue),
       dueDate: date,
       month: date.slice(0, 7),
@@ -154,6 +156,7 @@ export function PagamentosPage() {
     setInstallmentsQuantity(1);
     setStartDate(today);
     setResourceName('');
+    setPaymentReason('');
     setScheduleDates([today]);
   };
 
@@ -169,6 +172,7 @@ export function PagamentosPage() {
       selectedClientId,
       buildYearlyMonthlySchedule(dueDate, promotionalValue, monthlyContractMonth).map((payment) => ({
         ...payment,
+        reason: paymentReason.trim(),
         promotionalValue,
         fixedValue,
         value: promotionalValue,
@@ -177,6 +181,7 @@ export function PagamentosPage() {
     setClients(nextClients);
     setMonthlyPromotionalValue(0);
     setMonthlyFixedValue(0);
+    setPaymentReason('');
     setDueDate(today);
     setMonthlyContractMonth(getCurrentMonthKey());
   };
@@ -220,6 +225,16 @@ export function PagamentosPage() {
     }
   };
 
+  const handleUpdatePaymentReason = async (clientId: string, paymentId: string, reason: string) => {
+    try {
+      const nextClients = await updatePaymentInClient(clientId, paymentId, { reason });
+      setClients(nextClients);
+    } catch (error) {
+      console.error('Erro ao atualizar o motivo da cobrança:', error);
+      alert('Não foi possível salvar o motivo da cobrança. Tente novamente.');
+    }
+  };
+
   return (
     <section className="payments-page">
       <div className="payments-page__header">
@@ -259,6 +274,7 @@ export function PagamentosPage() {
                 onAddPayment={handleAddPayment}
                 onTogglePayment={handleTogglePayment}
                 onDeletePayment={handleDeletePayment}
+                onUpdatePaymentReason={handleUpdatePaymentReason}
               />
             ))}
           </div>
@@ -315,6 +331,8 @@ export function PagamentosPage() {
                   installmentsQuantity={installmentsQuantity}
                   startDate={startDate}
                   scheduleDates={scheduleDates}
+                  reason={paymentReason}
+                  onReasonChange={setPaymentReason}
                   onSelectedClientIdChange={(clientId) => setSelectedClientId(clientId || null)}
                   onInstallmentValueChange={(value) => setStructureValue(Number(value))}
                   onInstallmentsQuantityChange={(value) => {
@@ -347,6 +365,8 @@ export function PagamentosPage() {
                   installmentsQuantity={installmentsQuantity}
                   startDate={startDate}
                   scheduleDates={scheduleDates}
+                  reason={paymentReason}
+                  onReasonChange={setPaymentReason}
                   resourceName={resourceName}
                   onResourceNameChange={(value) => setResourceName(value)}
                   onSelectedClientIdChange={(clientId) => setSelectedClientId(clientId || null)}
@@ -380,11 +400,13 @@ export function PagamentosPage() {
                   contractMonth={monthlyContractMonth}
                   promotionalValue={monthlyPromotionalValue}
                   fixedValue={monthlyFixedValue}
+                  reason={paymentReason}
                   onSelectedClientIdChange={(clientId) => setSelectedClientId(clientId || null)}
                   onDueDateChange={(value) => setDueDate(value)}
                   onContractMonthChange={(value) => setMonthlyContractMonth(value)}
                   onPromotionalValueChange={(value) => setMonthlyPromotionalValue(parseMoneyInput(value))}
                   onFixedValueChange={(value) => setMonthlyFixedValue(parseMoneyInput(value))}
+                  onReasonChange={setPaymentReason}
                   onSubmit={handleSubmitMonthly}
                 />
               )}

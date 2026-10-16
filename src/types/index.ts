@@ -18,6 +18,7 @@ export type ClientJourney = {
 export type Payment = {
   id: string;
   description: string;
+  reason?: string;
   value: number;
   promotionalValue?: number;
   fixedValue?: number;

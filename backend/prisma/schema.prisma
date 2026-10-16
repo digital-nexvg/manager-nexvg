@@ -63,6 +63,7 @@ model Payment {
   externalId    String?   @unique
   clientId      String
   description   String
+  reason        String?
   value         Decimal   @db.Decimal(10, 2)
   dueDate       DateTime?
   month         String?

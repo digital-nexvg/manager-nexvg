@@ -9,7 +9,9 @@ type StructurePaymentFormProps = {
   startDate: string;
   scheduleDates: string[];
   resourceName?: string;
+  reason: string;
   onResourceNameChange?: (value: string) => void;
+  onReasonChange: (value: string) => void;
   onSelectedClientIdChange: (clientId: string) => void;
   onInstallmentValueChange: (value: string) => void;
   onInstallmentsQuantityChange: (value: string) => void;
@@ -28,7 +30,9 @@ export function StructurePaymentForm({
   startDate,
   scheduleDates,
   resourceName = '',
+  reason,
   onResourceNameChange,
+  onReasonChange,
   onSelectedClientIdChange,
   onInstallmentValueChange,
   onInstallmentsQuantityChange,
@@ -113,6 +117,16 @@ export function StructurePaymentForm({
           </label>
         </div>
       </div>
+
+      <label className="payment-reason-field">
+        <span>Motivo da cobrança (opcional)</span>
+        <input
+          type="text"
+          value={reason}
+          onChange={(event) => onReasonChange(event.target.value)}
+          placeholder="Ex: configuração inicial, suporte adicional..."
+        />
+      </label>
 
       <div className="structure-payment-form__summary">
         <div>

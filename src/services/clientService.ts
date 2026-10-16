@@ -42,6 +42,7 @@ function normalizeClient(client: Partial<Client> & { id?: string }): Client {
     payments: (client.payments ?? []).map((payment) => ({
       id: payment.id ?? generateId(),
       description: payment.description ?? '',
+      reason: payment.reason ?? '',
       value: payment.value ?? 0,
       promotionalValue: payment.promotionalValue ?? payment.value ?? 0,
       fixedValue: payment.fixedValue ?? payment.value ?? 0,
@@ -90,6 +91,7 @@ export async function createClient(client: Client): Promise<Client> {
     payments: (normalized.payments ?? []).map((payment) => ({
       id: payment.id,
       description: payment.description,
+      reason: payment.reason ?? '',
       value: payment.value,
       promotionalValue: payment.promotionalValue ?? payment.value,
       fixedValue: payment.fixedValue ?? payment.value,
@@ -142,6 +144,7 @@ export async function updateClient(client: Client): Promise<Client> {
     payments: (normalized.payments ?? []).map((payment) => ({
       id: payment.id,
       description: payment.description,
+      reason: payment.reason ?? '',
       value: payment.value,
       promotionalValue: payment.promotionalValue ?? payment.value,
       fixedValue: payment.fixedValue ?? payment.value,

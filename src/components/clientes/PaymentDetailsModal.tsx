@@ -51,6 +51,7 @@ export function PaymentDetailsModal({ isOpen, client, onClose }: PaymentDetailsM
             <div className="payment-details-modal__summary">
               <span>Descrição: {nextPayment.description}</span>
               <span>Valor: R$ {nextPayment.value.toFixed(2)}</span>
+              <span>Motivo: {nextPayment.reason || '—'}</span>
               <span>Vencimento: {formatDate(nextPayment.dueDate)}</span>
               <span>Status: {getPaymentStatus(nextPayment)}</span>
               <span>Mês: {nextPayment.month ? new Date(`${nextPayment.month}-01`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) : '—'}</span>
@@ -65,6 +66,7 @@ export function PaymentDetailsModal({ isOpen, client, onClose }: PaymentDetailsM
               <div key={payment.id} className="payment-details-modal__item">
                 <strong>{payment.description}</strong>
                 <span>R$ {payment.value.toFixed(2)}</span>
+                <span>Motivo: {payment.reason || '—'}</span>
                 <span>{formatDate(payment.dueDate)}</span>
                 <span>{payment.paid ? 'Pago' : 'Em aberto'}</span>
               </div>

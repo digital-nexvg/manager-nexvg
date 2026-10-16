@@ -83,6 +83,7 @@ export const clientController = {
         payments: client.payments.map((payment) => ({
           id: payment.id,
           description: payment.description,
+          reason: payment.reason,
           value: Number(payment.value),
           dueDate: payment.dueDate ? payment.dueDate.toISOString().slice(0, 10) : '',
           paymentDate: payment.paymentDate ? payment.paymentDate.toISOString().slice(0, 10) : '',
@@ -119,6 +120,7 @@ export const clientController = {
           payments: {
             create: payments.map((payment: any) => ({
               description: payment.description,
+              reason: payment.reason || null,
               value: payment.value,
               dueDate: payment.dueDate ? new Date(payment.dueDate) : null,
               month: payment.month,
@@ -169,6 +171,7 @@ export const clientController = {
             deleteMany: {},
             create: payments.map((payment: any) => ({
               description: payment.description,
+              reason: payment.reason || null,
               value: payment.value,
               dueDate: payment.dueDate ? new Date(payment.dueDate) : null,
               month: payment.month,

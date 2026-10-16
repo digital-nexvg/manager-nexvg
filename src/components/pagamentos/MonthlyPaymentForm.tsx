@@ -7,11 +7,13 @@ type MonthlyPaymentFormProps = {
   contractMonth: string;
   promotionalValue: number;
   fixedValue: number;
+  reason: string;
   onSelectedClientIdChange: (clientId: string) => void;
   onDueDateChange: (value: string) => void;
   onContractMonthChange: (value: string) => void;
   onPromotionalValueChange: (value: string) => void;
   onFixedValueChange: (value: string) => void;
+  onReasonChange: (value: string) => void;
   onSubmit: () => void;
 };
 
@@ -22,11 +24,13 @@ export function MonthlyPaymentForm({
   contractMonth,
   promotionalValue,
   fixedValue,
+  reason,
   onSelectedClientIdChange,
   onDueDateChange,
   onContractMonthChange,
   onPromotionalValueChange,
   onFixedValueChange,
+  onReasonChange,
   onSubmit,
 }: MonthlyPaymentFormProps) {
   return (
@@ -91,6 +95,16 @@ export function MonthlyPaymentForm({
           </label>
         </div>
       </div>
+
+      <label className="payment-reason-field">
+        <span>Motivo da cobrança (opcional)</span>
+        <input
+          type="text"
+          value={reason}
+          onChange={(event) => onReasonChange(event.target.value)}
+          placeholder="Ex: mensalidade do plano contratado..."
+        />
+      </label>
 
       <div className="monthly-payment-form__actions">
         <button type="submit" className="btn btn--primary">
