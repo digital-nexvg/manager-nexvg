@@ -1537,6 +1537,114 @@
   color: #a7f3d0;
 }
 
+.status-badge--new {
+  background: rgba(79, 140, 255, 0.18);
+  color: #bfdbfe;
+}
+
+.status-badge--inactive {
+  background: rgba(148, 163, 184, 0.16);
+  color: #cbd5e1;
+}
+
+.clients-page__list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.clients-page__list-head h2 {
+  margin: 0;
+}
+
+.clients-page__count {
+  min-width: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.16);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.clients-page__table-card--inactive {
+  opacity: 0.88;
+  border-style: dashed;
+}
+
+.clients-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.66);
+}
+
+.clients-filter__group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.clients-filter__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: rgba(8, 19, 35, 0.9);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.clients-filter__chip span {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.75rem;
+}
+
+.clients-filter__chip.is-active {
+  border-color: rgba(110, 231, 249, 0.45);
+  background: linear-gradient(135deg, rgba(79, 140, 255, 0.28), rgba(124, 58, 237, 0.24));
+  color: var(--text-strong);
+}
+
+.clients-filter__segment {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 200px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+  .clients-filter__group {
+    width: 100%;
+  }
+
+  .clients-filter__chip {
+    flex: 1 1 calc(50% - 8px);
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .clients-filter__segment {
+    width: 100%;
+  }
+}
+
 .status-badge--inactive {
   background: rgba(245, 158, 11, 0.16);
   color: #fde68a;

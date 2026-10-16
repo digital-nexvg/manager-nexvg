@@ -4,8 +4,10 @@ import { ClientTable } from '../components/clientes/ClientTable';
 import { SegmentForm } from '../components/clientes/SegmentForm';
 import { SearchInput } from '../components/common/SearchInput';
 import { createClient, deleteClient, getClients, updateClient } from '../services/clientService';
+import { getSegments } from '../services/segmentService';
 import type { Client, ClientFormData } from '../types';
 import { getClientJourneyCompletionStatus } from '../utils/clientJourney';
+import { getClientStatusKey } from '../utils/clientStatus';
 import { generateId } from '../utils/id';
 
 const createEmptyForm = (segment = ''): ClientFormData => ({
@@ -27,7 +29,9 @@ export function ClientesPage() {
   const [showForm, setShowForm] = useState(false);
   const [showSegmentForm, setShowSegmentForm] = useState(false);
   const [isClientsVisible, setIsClientsVisible] = useState(false);
-
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'new' | 'inactive'>('all');
+  const [segmentFilter, setSegmentFilter] = useState('');
   useEffect(() => {
     const refreshClients = async () => {
       const nextClients = await getClients();
@@ -42,19 +46,69 @@ export function ClientesPage() {
     };
   }, []);
 
-  const filteredClients = useMemo(() => {
+  const searchedClients = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
 
-    if (!normalizedSearch) {
-      return clients;
-    }
+    return clients.filter((client) => {
+      if (segmentFilter && (client.segment ?? '') !== segmentFilter) {
+        return false;
+      }
 
-    return clients.filter((client) =>
-      [client.companyName, client.responsible, client.email, client.whatsapp, client.address]
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      return [client.companyName, client.responsible, client.email, client.whatsapp, client.address]
         .filter(Boolean)
-        .some((value) => value?.toLowerCase().includes(normalizedSearch)),
-    );
-  }, [clients, search]);
+        .some((value) => value?.toLowerCase().includes(normalizedSearch));
+    });
+  }, [clients, search, segmentFilter]);
+
+  const statusCounts = useMemo(() => {
+    const counts = { all: searchedClients.length, active: 0, new: 0, inactive: 0 };
+
+    searchedClients.forEach((client) => {
+      const key = getClientStatusKey(client);
+
+      if (key === 'inactive') counts.inactive += 1;
+      else if (key === 'new') counts.new += 1;
+      else if (key === 'active') counts.active += 1;
+    });
+
+    return counts;
+  }, [searchedClients]);
+
+  const segmentOptions = useMemo(
+    () =>
+      Array.from(new Set([...getSegments(), ...clients.map((client) => client.segment ?? '')]))
+        .filter(Boolean)
+        .sort((first, second) => first.localeCompare(second, 'pt-BR')),
+    [clients],
+  );
+
+  const { activeClients, inactiveClients } = useMemo(() => {
+    const inactive = searchedClients.filter((client) => getClientStatusKey(client) === 'inactive');
+    const active = searchedClients.filter((client) => {
+      const key = getClientStatusKey(client);
+
+      if (key === 'inactive') return false;
+      return statusFilter === 'all' || key === statusFilter;
+    });
+
+    return {
+      activeClients: statusFilter === 'inactive' ? [] : active,
+      inactiveClients: statusFilter === 'all' || statusFilter === 'inactive' ? inactive : [],
+    };
+  }, [searchedClients, statusFilter]);
+
+  const activeFiltersCount = (statusFilter !== 'all' ? 1 : 0) + (segmentFilter ? 1 : 0);
+
+  const statusFilterOptions = [
+    { value: 'all', label: 'Todos', count: statusCounts.all },
+    { value: 'active', label: 'Ativos', count: statusCounts.active },
+    { value: 'new', label: 'Novos', count: statusCounts.new },
+    { value: 'inactive', label: 'Inativos', count: statusCounts.inactive },
+  ] as const;
 
   const handleChange = (field: keyof ClientFormData, value: string) => {
     setFormData((current) => ({ ...current, [field]: value }));
@@ -231,14 +285,89 @@ export function ClientesPage() {
             ) : null}
 
             <div className="clients-page__table-card">
-              <h2>Clientes cadastrados</h2>
-              <ClientTable
-                clients={filteredClients}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onSaveJourney={handleSaveJourney}
-              />
+              <div className="clients-page__list-head">
+                <h2>Clientes cadastrados</h2>
+                <button
+                  type="button"
+                  className={`btn ${isFilterOpen || activeFiltersCount ? 'btn--primary' : 'btn--secondary'}`}
+                  aria-expanded={isFilterOpen}
+                  onClick={() => setIsFilterOpen((current) => !current)}
+                >
+                  Filtros{activeFiltersCount ? ` (${activeFiltersCount})` : ''}
+                </button>
+              </div>
+
+              {isFilterOpen ? (
+                <div className="clients-filter">
+                  <div className="clients-filter__group" role="group" aria-label="Filtrar por situação">
+                    {statusFilterOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className={`clients-filter__chip${statusFilter === option.value ? ' is-active' : ''}`}
+                        aria-pressed={statusFilter === option.value}
+                        onClick={() => setStatusFilter(option.value)}
+                      >
+                        {option.label} <span>{option.count}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <label className="clients-filter__segment">
+                    <span>Segmento</span>
+                    <select value={segmentFilter} onChange={(event) => setSegmentFilter(event.target.value)}>
+                      <option value="">Todos os segmentos</option>
+                      {segmentOptions.map((segment) => (
+                        <option key={segment} value={segment}>
+                          {segment}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {activeFiltersCount ? (
+                    <button
+                      type="button"
+                      className="btn btn--ghost btn--small"
+                      onClick={() => {
+                        setStatusFilter('all');
+                        setSegmentFilter('');
+                      }}
+                    >
+                      Limpar filtros
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {statusFilter !== 'inactive' ? (
+                <ClientTable
+                  clients={activeClients}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onSaveJourney={handleSaveJourney}
+                />
+              ) : null}
             </div>
+
+            {inactiveClients.length ? (
+              <div className="clients-page__table-card clients-page__table-card--inactive">
+                <div className="clients-page__list-head">
+                  <h2>Clientes inativos</h2>
+                  <span className="clients-page__count">{inactiveClients.length}</span>
+                </div>
+                <ClientTable
+                  clients={inactiveClients}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onSaveJourney={handleSaveJourney}
+                />
+              </div>
+            ) : statusFilter === 'inactive' ? (
+              <div className="clients-page__table-card">
+                <p className="empty-state">Nenhum cliente inativo encontrado.</p>
+              </div>
+            ) : null}
           </>
         ) : null}
       </div>

@@ -3,7 +3,8 @@ import type { Client } from '../../types';
 import { formatDate } from '../../utils/formatters';
 import { PaymentDetailsModal } from './PaymentDetailsModal';
 import { ClientJourneyModal } from './ClientJourneyModal';
-import { getClientJourneyCompletionStatus, getJourneyStatusLabel } from '../../utils/clientJourney';
+import { getJourneyStatusLabel } from '../../utils/clientJourney';
+import { getClientStatusKey, getClientStatusLabel } from '../../utils/clientStatus';
 
 type ClientTableProps = {
   clients: Client[];
@@ -62,7 +63,11 @@ export function ClientTable({ clients, onEdit, onDelete, onSaveJourney }: Client
                   </button>
                 </td>
                 <td>{client.responsible}</td>
-                <td>{getClientJourneyCompletionStatus(client.journey)}</td>
+                <td>
+                  <span className={`status-badge status-badge--${getClientStatusKey(client)}`}>
+                    {getClientStatusLabel(client)}
+                  </span>
+                </td>
                 <td>{client.segment || '—'}</td>
                 <td>
                   {nextPayment ? (
