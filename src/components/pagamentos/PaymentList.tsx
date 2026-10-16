@@ -63,6 +63,7 @@ function getStatus(payment: Payment) {
 
 export function PaymentList({ client, onTogglePayment, onDeletePayment, onUpdatePaymentReason }: PaymentListProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showAllMonths, setShowAllMonths] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
   const [reasonDraft, setReasonDraft] = useState('');
@@ -74,7 +75,10 @@ export function PaymentList({ client, onTogglePayment, onDeletePayment, onUpdate
     .slice()
     .sort((first, second) => new Date(first.dueDate).getTime() - new Date(second.dueDate).getTime())[0];
   const monthlyGroups = groupPaymentsByMonth(client.payments);
-
+  const currentMonthKey = new Date().toISOString().slice(0, 7);
+  const currentMonthGroup = monthlyGroups.find((group) => group.key === currentMonthKey);
+  const otherMonthGroups = monthlyGroups.filter((group) => group.key !== currentMonthKey);
+  const visibleGroups = showAllMonths ? monthlyGroups : currentMonthGroup ? [currentMonthGroup] : [];
   return (
     <section className="payment-list">
       <div className="payment-list__header">
@@ -103,7 +107,10 @@ export function PaymentList({ client, onTogglePayment, onDeletePayment, onUpdate
             <p className="empty-state">Este cliente ainda não possui pagamentos.</p>
           ) : (
             <div className="payment-list__months">
-              {monthlyGroups.map((group) => (
+              {!currentMonthGroup && !showAllMonths ? (
+                <p className="empty-state">Nenhuma cobrança em {formatMonth(currentMonthKey)}.</p>
+              ) : null}
+              {visibleGroups.map((group) => (
                 <section key={group.key} className="payment-month">
                   <div className="payment-month__summary">
                     <div>
@@ -209,6 +216,17 @@ export function PaymentList({ client, onTogglePayment, onDeletePayment, onUpdate
                   ) : null}
                 </section>
               ))}
+
+              {otherMonthGroups.length ? (
+                <button
+                  type="button"
+                  className="btn btn--secondary payment-list__more"
+                  aria-expanded={showAllMonths}
+                  onClick={() => setShowAllMonths((current) => !current)}
+                >
+                  {showAllMonths ? 'Ver menos' : `Ver mais (${otherMonthGroups.length} ${otherMonthGroups.length === 1 ? 'mês' : 'meses'})`}
+                </button>
+              ) : null}
             </div>
           )}
         </div>
