@@ -64,7 +64,8 @@ function getStatus(payment: Payment) {
 export function PaymentList({ client, onTogglePayment, onDeletePayment, onUpdatePaymentReason }: PaymentListProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
-  const [editedReasons, setEditedReasons] = useState<Record<string, string>>({});
+  const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
+  const [reasonDraft, setReasonDraft] = useState('');
   const [paymentToConfirm, setPaymentToConfirm] = useState<Payment | null>(null);
   const [paymentDate, setPaymentDate] = useState(() => new Date().toISOString().slice(0, 10));
   const pendingPayments = client.payments.filter((payment) => !payment.paid);
@@ -124,47 +125,52 @@ export function PaymentList({ client, onTogglePayment, onDeletePayment, onUpdate
                     <div className="payment-list__rows">
                       {group.payments.map((payment) => {
                         const status = getStatus(payment);
-                        const currentReason = payment.reason ?? '';
-                        const editedReason = editedReasons[payment.id] ?? currentReason;
+                        const isEditing = editingPaymentId === payment.id;
 
                         return (
                           <article key={payment.id} className={`payment-row payment-row--${status}`}>
                             <div className="payment-row__main">
                               <div>
-                                <strong>{payment.description}</strong>
+                                <strong>
+                                  {payment.reason || payment.description} = {formatCurrency(payment.value)}
+                                </strong>
                                 <p>{formatDate(payment.dueDate)}</p>
                               </div>
 
-                              <span className="payment-row__value">{formatCurrency(payment.value)}</span>
-                            </div>
-
-                            <div className="payment-row__reason">
-                              <label htmlFor={`payment-reason-${payment.id}`}>Motivo da cobrança</label>
-                              <input
-                                id={`payment-reason-${payment.id}`}
-                                type="text"
-                                value={editedReason}
-                                placeholder="Adicione o motivo (opcional)"
-                                onChange={(event) =>
-                                  setEditedReasons((current) => ({ ...current, [payment.id]: event.target.value }))
-                                }
-                              />
                               <button
                                 type="button"
                                 className="btn btn--secondary btn--small"
-                                disabled={editedReason === currentReason}
                                 onClick={() => {
-                                  onUpdatePaymentReason(client.id, payment.id, editedReason.trim());
-                                  setEditedReasons((current) => {
-                                    const next = { ...current };
-                                    delete next[payment.id];
-                                    return next;
-                                  });
+                                  setEditingPaymentId(isEditing ? null : payment.id);
+                                  setReasonDraft(payment.reason ?? '');
                                 }}
                               >
-                                Salvar motivo
+                                {isEditing ? 'Cancelar' : 'Editar'}
                               </button>
                             </div>
+
+                            {isEditing ? (
+                              <div className="payment-row__reason">
+                                <label htmlFor={`payment-reason-${payment.id}`}>Motivo da cobrança</label>
+                                <input
+                                  id={`payment-reason-${payment.id}`}
+                                  type="text"
+                                  value={reasonDraft}
+                                  placeholder="Ex: Mensalidade Geolocalização"
+                                  onChange={(event) => setReasonDraft(event.target.value)}
+                                />
+                                <button
+                                  type="button"
+                                  className="btn btn--primary btn--small"
+                                  onClick={() => {
+                                    onUpdatePaymentReason(client.id, payment.id, reasonDraft.trim());
+                                    setEditingPaymentId(null);
+                                  }}
+                                >
+                                  Salvar
+                                </button>
+                              </div>
+                            ) : null}
 
                             <div className="payment-row__meta">
                               <label className="payment-row__checkbox">
