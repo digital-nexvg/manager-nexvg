@@ -2723,3 +2723,285 @@
     display: none;
   }
 }
+
+/* ===== Refinamento mobile ===== */
+html,
+body {
+  overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+  .app-shell {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  /* 16px evita o zoom automático do iOS ao focar nos campos */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+    min-height: 44px;
+    max-width: 100%;
+  }
+
+  input[type='checkbox'],
+  input[type='radio'] {
+    min-height: 0;
+    width: 20px;
+    height: 20px;
+  }
+
+  .btn,
+  .dashboard-header__status,
+  .dashboard-month-nav__toggle {
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+  }
+
+  .btn--small {
+    min-height: 40px;
+    padding: 8px 12px;
+  }
+
+  .btn--close {
+    width: 44px;
+    height: 44px;
+  }
+
+  .clients-page__actions .btn,
+  .payments-page__actions .btn,
+  .payments-page__tabs .btn,
+  .clients-page__hero .btn,
+  .payments-page__form-top > .btn {
+    width: 100%;
+  }
+
+  .payments-page__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  /* Tabela de clientes vira lista de cards */
+  .client-table-wrapper {
+    overflow-x: visible;
+  }
+
+  .client-table,
+  .client-table tbody,
+  .client-table tr,
+  .client-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .client-table thead {
+    display: none;
+  }
+
+  .client-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .client-table tr {
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+  }
+
+  .client-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    text-align: right;
+    min-width: 0;
+  }
+
+  .client-table td:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .client-table td::before {
+    flex: 0 0 auto;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: left;
+  }
+
+  .client-table td:nth-child(1)::before { content: 'Empresa'; }
+  .client-table td:nth-child(2)::before { content: 'Responsável'; }
+  .client-table td:nth-child(3)::before { content: 'Status'; }
+  .client-table td:nth-child(4)::before { content: 'Segmento'; }
+  .client-table td:nth-child(5)::before { content: 'Próximo pagamento'; }
+  .client-table td:nth-child(6)::before { content: 'Próxima etapa'; }
+  .client-table td:nth-child(7)::before { content: none; }
+
+  .client-table__name-trigger {
+    width: auto;
+    justify-content: flex-end;
+    text-align: right;
+  }
+
+  .client-table td:nth-child(7) .table-actions {
+    width: 100%;
+  }
+
+  .client-table td:nth-child(7) .table-actions .btn {
+    flex: 1;
+  }
+
+  /* Modais como bottom sheet */
+  .dashboard-metric-modal,
+  .payment-details-modal,
+  .confirmation-modal,
+  .client-journey-modal,
+  .client-journey-modal__hidden-overlay,
+  .payment-modal {
+    align-items: end;
+    place-items: end center;
+    padding: 0;
+  }
+
+  .dashboard-metric-modal__card,
+  .payment-details-modal__card,
+  .confirmation-modal__card,
+  .client-journey-modal__card,
+  .client-journey-modal__hidden-card,
+  .payment-modal__card {
+    width: 100%;
+    max-height: 92vh;
+    max-height: 92dvh;
+    border-radius: 20px 20px 0 0;
+    padding: 16px 16px max(16px, env(safe-area-inset-bottom));
+    overflow-y: auto;
+  }
+
+  .dashboard-metric-modal__body,
+  .payment-details-modal__body {
+    max-height: none;
+    padding-right: 0;
+  }
+
+  .dashboard-metric-modal__item,
+  .payment-details-modal__item {
+    flex-wrap: wrap;
+    white-space: normal;
+    overflow-x: visible;
+  }
+
+  .confirmation-modal__actions,
+  .client-journey-modal__actions,
+  .client-form__actions,
+  .payment-form__actions,
+  .monthly-payment-form__actions,
+  .structure-payment-form__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .confirmation-modal__actions .btn,
+  .client-journey-modal__actions .btn,
+  .client-form__actions .btn,
+  .payment-form__actions .btn,
+  .monthly-payment-form__actions .btn,
+  .structure-payment-form__actions .btn {
+    width: 100%;
+  }
+
+  /* Financeiro por cliente */
+  .payment-list {
+    padding: 12px;
+  }
+
+  .payment-list__company-line h3,
+  .payment-list__company-line p {
+    white-space: normal;
+  }
+
+  .payment-list__summary-inline {
+    white-space: normal;
+  }
+
+  .payment-month {
+    padding: 12px;
+  }
+
+  .payment-month__summary {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .payment-month__total {
+    font-size: 1.1rem;
+    white-space: normal;
+  }
+
+  .payment-month__summary .btn {
+    width: 100%;
+  }
+
+  .payment-row {
+    padding: 12px;
+  }
+
+  .payment-row__main {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .payment-row__main > div {
+    flex: 1 1 60%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .payment-row__main .btn {
+    flex: 0 0 auto;
+  }
+
+  .payment-row__meta {
+    justify-content: space-between;
+  }
+
+  .payment-row__reason {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-row__reason .btn {
+    width: 100%;
+  }
+
+  .structure-payment-form__summary {
+    gap: 10px;
+  }
+
+  .structure-payment-form__summary .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .app-shell {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .payment-row__meta {
+    gap: 8px;
+  }
+}
