@@ -230,6 +230,7 @@ export function ClientesPage() {
   );
 
   return (
+    <section className="clients-page">
       <div className="clients-page__header">
         <div>
           <p className="section-tag">Clientes</p>
